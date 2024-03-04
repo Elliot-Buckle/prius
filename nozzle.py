@@ -6,4 +6,7 @@ class Nozzle:
             engine:Engine,
             contour:str = 'moc'
         ):
-            pass
+            self.engine = engine
+            self.contour = contour
+            
+            #Calculations

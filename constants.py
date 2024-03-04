@@ -1,6 +1,3 @@
-# Gravitational constant
-G = 6.67e-11
-
 # Earth gravitational acceleration (ms^-2)
 g = 9.80665
 
