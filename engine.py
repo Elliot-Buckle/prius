@@ -11,7 +11,8 @@ class Engine:
         y:float,
         ox_den:float,
         cd:float = 1,
-        Pe:float = P_sl
+        Pe:float = P_sl,
+        Pa:float = P_sl
     ):
         self.chamber_pressure = Pc
         self.exit_pressure_1D = Pe
@@ -22,9 +23,10 @@ class Engine:
         self.thrust = thrust
         self.ox_density = ox_den
         self.discharge_coeff = cd
+        self.ambient_pressure = Pa
         
         # calcs
-        self.pressure_ratio = self.chamber_pressure/self.exit_pressure_1D
+        self.throat_pressure = self.chamber_pressure*((self.ratio_of_heats + 1)/2)**(self.ratio_of_heats/(1 - self.ratio_of_heats))
         
         self.area_ratio_1D = 1/(((self.ratio_of_heats + 1)/2)**(1/(self.ratio_of_heats - 1))*(self.exit_pressure_1D/self.chamber_pressure)**(1/self.ratio_of_heats)
                               *np.sqrt((self.ratio_of_heats + 1)/(self.ratio_of_heats - 1)*(1 - (self.exit_pressure_1D/self.chamber_pressure)**((self.ratio_of_heats - 1)/self.ratio_of_heats)))
@@ -34,7 +36,12 @@ class Engine:
             2*self.ratio_of_heats/
             (self.mol_mass*(self.ratio_of_heats - 1))*R*self.chamber_temp*(1 - (self.exit_pressure_1D/self.chamber_pressure)**((self.ratio_of_heats - 1)/self.ratio_of_heats))
             )
-        #self.isp_m_s = (self.exit_vel_1D*self.mass_flux())
+        
+        self.throat_mass_flux = self.mass_flux(self.throat_pressure)
+        
+        self.isp_m_s = (self.exit_vel_1D*self.throat_mass_flux + self.area_ratio_1D*(self.exit_pressure_1D - self.ambient_pressure))/self.throat_mass_flux
+        
+        self.isp_s = self.isp_m_s/g
         
         self.ox_flow = self.thrust/self.exit_vel_1D
         
@@ -44,5 +51,5 @@ class Engine:
             (2/(self.ratio_of_heats + 1))**((self.ratio_of_heats + 1)/(self.ratio_of_heats - 1))
         )/np.sqrt(self.ratio_of_heats*R*self.chamber_temp)
 
-engine = Engine(Pc=2*10**6, Tc=3000, thrust=300, M=0.026, mix_ratio=8, y=1.2)
-print(engine.ox_flow)
+engine = Engine(Pc=2*10**6, Tc=3000, thrust=300, M=0.026, mix_ratio=8, y=1.2, ox_den=700)
+print(engine.ox_flow, engine.isp_s)

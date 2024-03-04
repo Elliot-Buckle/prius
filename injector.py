@@ -9,24 +9,24 @@ class Injector:
         self,
         engine:Engine,
     ):
-    
+        self.engine = engine
         self.calculate()
         
         
     def calculate(self):
         # Determine pressure drop
-        self.pressure_drop = 0.3 * Engine.pressure_chamber
+        self.pressure_drop = 0.3 * self.engine.chamber_pressure
         print(self.pressure_drop)
         
         # Determine injection area
-        self.injection_area = Engine.ox_flow / (Engine.discharge_coefficient * sqrt(2 * self.pressure_drop * Engine.ox_density))
+        self.injection_area = self.engine.ox_flow / (self.engine.discharge_coeff * sqrt(2 * self.pressure_drop * self.engine.ox_density))
         print(self.injection_area)
         
         # Determine injection velocity
-        self.injection_velocity = sqrt(2 * self.pressure_drop / Engine.ox_density)
+        self.injection_velocity = sqrt(2 * self.pressure_drop / self.engine.ox_density)
         print(self.injection_velocity)
         
         # Determine manifold pressure
-        self.pressure_manifold = Engine.pressure_chamber + self.pressure_drop
+        self.pressure_manifold = self.engine.chamber_pressure + self.pressure_drop
         print(self.pressure_manifold)
         
