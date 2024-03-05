@@ -2,7 +2,6 @@ from constants import *
 #from injector import Injector
 from numpy import *
 import numpy as np
-from math import *
 import matplotlib.pyplot as plt
 
 
@@ -29,12 +28,12 @@ class Nozzle:
         self.thrust = thrust
         self.ambient_pressure = Pa
         self.contour = contour.casefold()
-        self.xpoints = None
-        self.ypoints = None
+        self.xpoints = np.ndarray([])
+        self.ypoints = np.ndarray([])
         self.divisions = N
         
         self.calculate()
-        self.plot()
+        self.generate_contour()
         
     def calculate(self):
         
@@ -66,6 +65,7 @@ class Nozzle:
         self.exit_area_1D = self.throat_area * self.area_ratio_1D
         self.exit_radius_1D = np.sqrt(self.exit_area_1D/np.pi)
         self.exit_diameter_1D = 2*self.exit_radius_1D
+        self.expansion_ratio = (self.throat_radius * self.exit_radius_1D) ** 2
         
     def describe(self):
         print("----------------NOZZLE----------------")
@@ -84,11 +84,12 @@ class Nozzle:
         length_fraction = 0.8
         parabola_angle_initial = 22
         parabola_angle_final = 13
+        angle_div = 15
         
         # determine length of nozzle
         self.length = length_fraction * (
-            ((sqrt(self.expansion_ratio) - 1) * self.radius_throat)
-            / (tan(radians(self.angle_divergent)))
+            ((sqrt(self.expansion_ratio) - 1) * self.throat_radius)
+            / (tan(radians(angle_div)))
         )
         
         # converging throat section
@@ -155,13 +156,21 @@ class Nozzle:
         y_para = (
             (Ny * ((1 - t3) ** 2))
             + (Qy * (2 * t3) * (1 - t3))
-            + ((t3**2) * self.radius_exit)
+            + ((t3**2) * self.exit_radius_1D)
         )
-        
+          
         # add contour to x/y points
         self.xpoints = concatenate((x_conv, x_div, x_para))
         self.ypoints = concatenate((y_conv, y_div, y_para))
         
+    def plot(self):
+        plt.plot(self.xpoints, self.ypoints)
+        plt.axis('equal')
+        plt.show()
         
         
 #nozzle = Nozzle(Pc=2*10**6, Tc=3000, thrust=300, M=0.026, mix_ratio=8, y=1.2, ox_den=700)
+
+if __name__ == "__main__":
+    nozz = Nozzle(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593)
+    nozz.plot()
