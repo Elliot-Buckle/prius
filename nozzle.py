@@ -10,8 +10,6 @@ class Nozzle:
         M:float,
         mix_ratio:float,
         y:float,
-        ox_den:float,
-        cd:float = 1,
         Pe:float = P_sl,
         Pa:float = P_sl,
         contour:str = "moc"
@@ -23,8 +21,6 @@ class Nozzle:
         self.ratio_of_heats = y
         self.mol_mass = M
         self.thrust = thrust
-        self.ox_density = ox_den
-        self.discharge_coeff = cd
         self.ambient_pressure = Pa
         self.contour = contour.casefold()
         
@@ -51,6 +47,24 @@ class Nozzle:
         
         self.isp_s = self.isp_m_s/g
         
-        self.ox_flow = self.thrust/self.exit_vel_1D
+        self.mass_flow = self.thrust/self.isp_m_s
+        
+        self.throat_area = self.mass_flow/self.throat_mass_flux
+        
+        self.throat_radius = np.sqrt(self.throat_area/np.pi)
+        self.throat_diameter = 2*self.throat_radius
+        self.exit_area_1D = self.throat_area * self.area_ratio_1D
+        self.exit_radius_1D = np.sqrt(self.exit_area_1D/np.pi)
+        self.exit_diameter_1D = 2*self.exit_radius_1D
+        
+    def describe(self):
+        print("----------------NOZZLE----------------")
+        print(f"Thrust (N): {round(self.thrust,2)}")
+        print(f"Isp (s): {round(self.isp_s, 2)}")
+        print(f"Isp (Ns/kg): {round(self.isp_m_s, 0)}")
+        print(f"Throat Diameter (mm): {round(self.throat_diameter*10**3, 2)}")
+        print(f"Exit Diameter (mm): {round(self.exit_diameter_1D*10**3, 2)}")
+        print(f"Expansion ratio: {round(self.area_ratio_1D, 2)}")
+        print("")
         
 #nozzle = Nozzle(Pc=2*10**6, Tc=3000, thrust=300, M=0.026, mix_ratio=8, y=1.2, ox_den=700)
