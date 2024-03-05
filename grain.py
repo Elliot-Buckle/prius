@@ -1,5 +1,6 @@
 from injector import Injector
 import numpy as np
+import colorsys
 class Grain:
     def __init__(
         self,
@@ -36,3 +37,6 @@ class Grain:
         print(f"Grain Length (mm): {round(self.grain_length*10**3, 2)}")
         print(f"Fuel mass flowrate (g/s): {round(self.fuel_flow_rate*10**3, 2)}")
         print("")
+        
+    def model(self):
+        pass
