@@ -1,6 +1,6 @@
 from injector import Injector
 import numpy as np
-import colorsys
+import cadquery
 class Grain:
     def __init__(
         self,
