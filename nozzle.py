@@ -65,7 +65,6 @@ class Nozzle:
         self.exit_area_1D = self.throat_area * self.area_ratio_1D
         self.exit_radius_1D = np.sqrt(self.exit_area_1D/np.pi)
         self.exit_diameter_1D = 2*self.exit_radius_1D
-        self.expansion_ratio = (self.throat_radius * self.exit_radius_1D) ** 2
         
     def describe(self):
         print("----------------NOZZLE----------------")
@@ -88,7 +87,7 @@ class Nozzle:
         
         # determine length of nozzle
         self.length = length_fraction * (
-            ((sqrt(self.expansion_ratio) - 1) * self.throat_radius)
+            ((sqrt(self.area_ratio_1D) - 1) * self.throat_radius)
             / (tan(radians(angle_div)))
         )
         
