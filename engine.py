@@ -3,6 +3,8 @@ from injector import Injector
 from nozzle import Nozzle
 from grain import Grain
 import numpy as np
+import matplotlib.pyplot as plt
+
 class Engine:
     def __init__(
         self,
@@ -33,11 +35,15 @@ class Engine:
         self.grain = Grain(self.injector, a, n, fuel_den, ox_flux)
         
         self.describe()
+        self.plot()
         
     def describe(self):
         self.nozzle.describe()
         self.injector.describe()
         self.grain.describe()
+        
+    def plot(self):
+        plt.plot(self.nozzle.xpoints, self.nozzle.ypoints)
         
     
         

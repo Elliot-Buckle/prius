@@ -1,6 +1,11 @@
 from constants import *
 #from injector import Injector
+from numpy import *
 import numpy as np
+from math import *
+import matplotlib.pyplot as plt
+
+
 class Nozzle:
     def __init__(
         self,
@@ -12,7 +17,8 @@ class Nozzle:
         y:float,
         Pe:float = P_sl,
         Pa:float = P_sl,
-        contour:str = "moc"
+        contour:str = "moc",
+        N:int = 2000
     ):
         self.chamber_pressure = Pc
         self.exit_pressure_1D = Pe
@@ -23,8 +29,12 @@ class Nozzle:
         self.thrust = thrust
         self.ambient_pressure = Pa
         self.contour = contour.casefold()
+        self.xpoints = None
+        self.ypoints = None
+        self.divisions = N
         
         self.calculate()
+        self.plot()
         
     def calculate(self):
         
@@ -66,5 +76,92 @@ class Nozzle:
         print(f"Exit Diameter (mm): {round(self.exit_diameter_1D*10**3, 2)}")
         print(f"Expansion ratio: {round(self.area_ratio_1D, 2)}")
         print("")
+        
+    def generate_contour(self):
+        # temp rao nozzle code
+        
+        # define some required variables
+        length_fraction = 0.8
+        parabola_angle_initial = 22
+        parabola_angle_final = 13
+        
+        # determine length of nozzle
+        self.length = length_fraction * (
+            ((sqrt(self.expansion_ratio) - 1) * self.radius_throat)
+            / (tan(radians(self.angle_divergent)))
+        )
+        
+        # converging throat section
+        t1  = linspace(radians(-135), radians(-90), self.divisions, False)
+        
+        x_conv = 1.5 * self.throat_radius * cos(t1)
+        y_conv = (1.5 * self.throat_radius * sin(t1)) + (2.5 * self.throat_radius)
+        
+        # diverging throat section
+        t2 = linspace(radians(-90), radians(parabola_angle_initial - 90), self.divisions, False)
+        
+        x_div = 0.382 * self.throat_radius * cos(t2)
+        y_div = (0.382 * self.throat_radius * sin(t2)) + (1.382 * self.throat_radius)
+        
+        # start of parabola
+        Nx = (
+            0.382
+            * self.throat_radius
+            * cos(radians(parabola_angle_initial) - radians(90))
+        )
+        
+        Ny = (
+            0.382
+            * self.throat_radius
+            * sin(radians(parabola_angle_initial) - radians(90))
+        ) + (1.382 * self.throat_radius)   
+        
+        # intersection of line segments
+        Qx = (
+            (self.exit_radius_1D - (self.length * tan(radians(parabola_angle_final))))
+            - (Ny - (Nx * tan(radians(parabola_angle_initial))))
+        ) / (
+            tan(radians(parabola_angle_initial))
+            - tan(radians(parabola_angle_final))
+        )
+        
+        Qy = (
+            (
+                (
+                    tan(radians(parabola_angle_initial))
+                    * (
+                        self.exit_radius_1D
+                        - (self.length * tan(radians(parabola_angle_final)))
+                    )
+                )
+            )
+            - (
+                tan(radians(parabola_angle_final))
+                * (Ny - (Nx * tan(radians(parabola_angle_initial))))
+            )
+        ) / (
+            tan(radians(parabola_angle_initial))
+            - tan(radians(parabola_angle_final))
+        )
+        
+        # parabolic expansion section
+        t3 = linspace(0, 1, self.divisions, False)
+        
+        x_para = (
+            (Nx * ((1 - t3) ** 2))
+            + (Qx * (2 * t3) * (1 - t3))
+            + ((t3**2) * self.length)
+        )
+        y_para = (
+            (Ny * ((1 - t3) ** 2))
+            + (Qy * (2 * t3) * (1 - t3))
+            + ((t3**2) * self.radius_exit)
+        )
+        
+        # add contour to x/y points
+        self.xpoints = concatenate((x_conv, x_div, x_para))
+        self.ypoints = concatenate((y_conv, y_div, y_para))
+        
+        
         
 #nozzle = Nozzle(Pc=2*10**6, Tc=3000, thrust=300, M=0.026, mix_ratio=8, y=1.2, ox_den=700)
