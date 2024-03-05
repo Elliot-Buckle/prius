@@ -1,6 +1,6 @@
 from injector import Injector
 import numpy as np
-import cadquery
+import cadquery as cq
 class Grain:
     def __init__(
         self,
@@ -39,4 +39,6 @@ class Grain:
         print("")
         
     def model(self):
+        geometry = cq.Workplane("XY").cylinder(self.grain_length*1000,self.grain_radius*1000).faces(">Z").workplane().hole(self.port_diameter)
+        cq.exporters.export(geometry, "fuel_grain.step")
         pass

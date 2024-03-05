@@ -33,6 +33,7 @@ class Engine:
         actual_thrust = self.nozzle.isp_m_s*(self.injector.ox_flow*(self.injector.mixture_ratio + 1)/self.injector.mixture_ratio)
         self.nozzle = Nozzle(Pc, Tc, actual_thrust, M, mix_ratio, y)
         self.grain = Grain(self.injector, a, n, fuel_den, ox_flux)
+        self.grain.model()
         
         self.describe()
         self.nozzle.plot()
