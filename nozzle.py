@@ -3,7 +3,7 @@ from constants import *
 from numpy import *
 import numpy as np
 import matplotlib.pyplot as plt
-
+import cadquery as cq
 
 class Nozzle:
     def __init__(
@@ -14,10 +14,11 @@ class Nozzle:
         M:float,
         mix_ratio:float,
         y:float,
+        nozzle_OD:float,
         Pe:float = P_sl,
         Pa:float = P_sl,
         contour:str = "moc",
-        N:int = 2000
+        N:int = 100
     ):
         self.chamber_pressure = Pc
         self.exit_pressure_1D = Pe
@@ -31,11 +32,15 @@ class Nozzle:
         self.xpoints = np.ndarray([])
         self.ypoints = np.ndarray([])
         self.divisions = N
+        self.nozzle_OD = nozzle_OD
+        self.nozzle_OR = nozzle_OD/2
         
         self.calculate()
         self.generate_contour()
         
     def calculate(self):
+        # 1D denotes values calculated using the 1D equations, which will be different to those using higher dimensional approahes such as method of
+        # characteristics.
         
         self.throat_pressure = self.chamber_pressure*((self.ratio_of_heats + 1)/2)**(self.ratio_of_heats/(1 - self.ratio_of_heats))
         
@@ -75,6 +80,23 @@ class Nozzle:
         print(f"Exit Diameter (mm): {round(self.exit_diameter_1D*10**3, 2)}")
         print(f"Expansion ratio: {round(self.area_ratio_1D, 2)}")
         print("")
+        
+    def model(self):
+        model_xpoints = [self.xpoints[0]] + self.xpoints.tolist() + [self.xpoints[-1]] + [self.xpoints[0]]
+        model_ypoints = [self.nozzle_OR] + self.ypoints.tolist() + [self.nozzle_OR]+ [self.nozzle_OR]
+        model_pts = []
+        for i in range(len(model_xpoints)):
+            model_pts.append((model_xpoints[i], model_ypoints[i]))
+            
+            
+        geometry = cq.Workplane("XY").polyline(model_pts).revolve()
+        cq.exporters.export(geometry, "nozzle.step")
+        
+        
+        # print(model_pts)
+        # plt.plot(model_xpoints, model_ypoints)
+        # plt.axis('equal')
+        # plt.show()
         
     def generate_contour(self):
         # temp rao nozzle code

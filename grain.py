@@ -1,6 +1,7 @@
 from injector import Injector
 import numpy as np
 import cadquery as cq
+import cq_editor
 class Grain:
     def __init__(
         self,
@@ -9,6 +10,7 @@ class Grain:
         n:float,
         fuel_den:float,
         ox_flux:float,
+        OD:float,
         geometry:str = "tube"
     ):
         self.injector = injector
@@ -17,6 +19,8 @@ class Grain:
         self.ox_flux = ox_flux
         self.geometry = geometry.casefold()
         self.fuel_density = fuel_den
+        self.outer_diameter = OD
+        self.outer_radius = OD/2
         
         self.calculate()
         
@@ -39,6 +43,8 @@ class Grain:
         print("")
         
     def model(self):
-        geometry = cq.Workplane("XY").cylinder(self.grain_length*1000,self.grain_radius*1000).faces(">Z").workplane().hole(self.port_diameter)
-        cq.exporters.export(geometry, "fuel_grain.step")
-        pass
+        if self.port_diameter < self.outer_diameter:
+            self.geometry = cq.Workplane("XY").cylinder(self.grain_length*1000,self.outer_radius*1000).faces(">Z").workplane().hole(self.port_diameter*1000)
+            cq.exporters.export(self.geometry, "fuel_grain.step")
+        else:
+            print("ERROR: port larger than grain")
