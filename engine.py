@@ -43,4 +43,4 @@ class Engine:
         
 
 engine = Engine(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, ox_den=786.6, cd=0.44, viscosity=3.237*10**-4,
-                tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1.5*10**-3, a=0.417, n=0.347, fuel_den=902, ox_flux=200)
+                tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, a=0.417, n=0.347, fuel_den=902, ox_flux=200)

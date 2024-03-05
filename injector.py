@@ -69,7 +69,7 @@ class Injector:
         self.orifice_area = 1/4*np.pi*self.orifice_diameter**2
         
         # Determine number of orifices (rounded up)
-        self.number_orifices = np.ceil(self.injection_area/self.orifice_area)
+        self.number_orifices = round(self.injection_area/self.orifice_area)
         
         # Determine actual oxidiser flow rate
         self.ox_flow = self.discharge_coefficient*self.injection_velocity*self.ox_density*self.number_orifices*self.orifice_area
