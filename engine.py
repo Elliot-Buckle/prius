@@ -35,15 +35,13 @@ class Engine:
         self.grain = Grain(self.injector, a, n, fuel_den, ox_flux)
         
         self.describe()
-        self.plot()
+        self.nozzle.plot()
+
         
     def describe(self):
         self.nozzle.describe()
         self.injector.describe()
         self.grain.describe()
-        
-    def plot(self):
-        plt.plot(self.nozzle.xpoints, self.nozzle.ypoints)
         
     
         
