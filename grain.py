@@ -47,6 +47,6 @@ class Grain:
         if self.port_diameter < self.outer_diameter:
             self.geometry = cq.Workplane("XY").cylinder(self.grain_length*1000,self.outer_radius*1000).faces(">Z").workplane().hole(self.port_diameter*1000)
             #show(self.geometry)
-            cq.exporters.export(self.geometry, "fuel_grain.STEP")
+            cq.exporters.export(self.geometry, "fuel_grain.step")
         else:
             print("ERROR: port larger than grain")

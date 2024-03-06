@@ -17,13 +17,13 @@ class Nozzle:
         mix_ratio:float,
         y:float,
         nozzle_OD:float,
-        angle_converging:float = np.pi/4,
+        angle_converging:float = np.pi/3,
         postcomb_LD:float = 1,
         Pe:float = P_sl,
         Pa:float = P_sl,
         contour:str = "rao",
-        N:int = 4,
-        expansion_radius_ratio = 0.382,
+        N:int = 16,
+        expansion_radius_ratio = 1,#0.382,
         **kwargs
     ):
         self.chamber_pressure = Pc
@@ -70,7 +70,7 @@ class Nozzle:
         else:
             dimensions = False
         
-        if dimensions == True:
+        if dimensions is True:
             self.generate_converging()
             self.model()
         
@@ -129,7 +129,7 @@ class Nozzle:
         # plt.plot(model_xpoints, model_ypoints)
         # plt.axis('equal')
         # plt.show()
-        cq.exporters.export(self.geometry, "nozzle.STEP")
+        cq.exporters.export(self.geometry, "nozzle.step")
 
         # (L, H, W, t) = (100.0, 20.0, 20.0, 1.0)
         # pts = [
@@ -149,9 +149,9 @@ class Nozzle:
         # temp rao nozzle code
         
         # define some required variables
-        length_fraction = 0.8
-        parabola_angle_initial = 22
-        parabola_angle_final = 13
+        length_fraction = 1
+        parabola_angle_initial = 18
+        parabola_angle_final = 9
         angle_div = 15
         
         # determine length of nozzle

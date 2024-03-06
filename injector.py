@@ -1,6 +1,8 @@
 import numpy as np
 from constants import *
 from nozzle import Nozzle
+import cadquery as cq
+from ocp_vscode import *
 
 class Injector:
     
@@ -12,7 +14,9 @@ class Injector:
         crit_pressure_drop:float,
         Cd:float,
         ox_den:float,
-        viscosity:float
+        viscosity:float,
+        precomb_LD:float = 1,
+        **kwargs
     ):
         self.nozzle = nozzle
         self.mixture_ratio = nozzle.mixture_ratio
@@ -22,8 +26,45 @@ class Injector:
         self.discharge_coefficient = Cd
         self.ox_density = ox_den
         self.dynamic_viscosity = viscosity
-        
+        self.precomb_LD = precomb_LD
         self.calculate()
+        
+        # Checking if design dimensions were specified
+        dimensions = True
+        if "grain" in kwargs:
+            self.grain = kwargs["grain"]
+        else: dimensions = False
+        
+        if "lip_thickness" in kwargs:
+            self.lip_thickness = kwargs["lip_thickness"]
+        else: dimensions = False
+        
+        if "plate_thickness" in kwargs:
+            self.plate_thickness = kwargs["plate_thickness"]
+        else: dimensions = False
+        
+        if "sheath_length" in kwargs:
+            self.sheath_length = kwargs["sheath_length"]
+        else:
+            dimensions = False
+        if "orifice_length" in kwargs:
+            self.orifice_length = kwargs["orifice_length"]
+        else:
+            dimensions = False
+            
+        if "injector_OD" in kwargs:
+            self.injector_OD = kwargs["injector_OD"]
+            self.injector_OR = self.injector_OD/2
+        else:
+            dimensions = False
+            
+        if "manifold_length" in kwargs:
+            self.manifold_length = kwargs["manifold_length"]
+        else:
+            dimensions = False
+            
+        if dimensions is True:
+            self.model()
         
     def describe(self):
         print("----------------INJECTOR----------------")
@@ -36,6 +77,28 @@ class Injector:
         print(f"Condition: {self.condition}")
         print("")
         
+    def model(self):
+        self.precomb_diam = self.grain.outer_diameter - 2*self.lip_thickness
+        self.precomb_radius = self.precomb_diam/2
+        self.precomb_length = self.precomb_LD*self.precomb_diam
+        height = self.precomb_length + self.sheath_length + self.orifice_length + self.manifold_length
+        self.geometry = (
+            cq.Workplane("XY").cylinder(height, self.injector_OR)
+            .faces(">Z")
+            .hole(self.grain.outer_diameter, self.sheath_length)
+            .faces(">Z")
+            .hole(self.precomb_diam, self.precomb_length + self. sheath_length)
+            .faces("<Z")
+            .workplane()
+            .hole(self.precomb_diam, self.manifold_length)
+            .faces(">Z")
+            .workplane()
+            .polygon(self.number_orifices, (self.grain.port_diameter - self.orifice_diameter),forConstruction=True,circumscribed=True)
+            .vertices()
+            .hole(self.orifice_diameter)
+        )
+        cq.exporters.export(self.geometry, "injector.step")
+    
     def calculate(self):
         #Determine oxidizer flow rate
         self.ox_flow = self.mixture_ratio*self.nozzle.thrust/(self.nozzle.isp_m_s*(self.mixture_ratio + 1))
