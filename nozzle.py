@@ -73,7 +73,53 @@ class Nozzle:
         if dimensions is True:
             self.generate_converging()
             self.model()
+            
+    
+    # Determine area ratios
+    def area_ratio(self, mach):
+        k = self.ratio_of_heats
+        return (
+            1 / mach * ((2 + (k - 1) * mach**2) / (k + 1)) ** ((k + 1) / (2 * k - 2))
+        )
         
+    def area_ratio_derivative(self, mach):
+        k = self.ratio_of_heats
+        return (
+        (2 * mach**2 - 2)
+        * (((k - 1) * mach**2 + 2) / (k + 1)) ** ((k + 1) / (2 * k - 2))
+        / ((k - 1) * mach**4 + 2 * mach**2)
+        )
+        
+    # Determine mach from area ratios
+    def mach_from_area(self, area, is_subsonic: bool = False):
+        # General calculation variables
+        max_iterations = 32
+        threshold = 10**-16
+        area_ratio = area / self.area_throat
+        if is_subsonic:
+            mach_guess = 1 / area_ratio  # This just seems to work
+            for i in range(max_iterations):
+                error = self.area_ratio(mach_guess) - area_ratio
+                if all(abs(error)) < threshold:
+                    break
+                else:
+                    slope = self.area_ratio_derivative(mach_guess)
+                    mach_guess -= error / slope
+        else:
+            # Uses a 2nd order Taylor series at M=1 to calculate initial guesses for supersonic mach at area ratio
+            a = 2 / (self.ratio_specific_heat + 1)
+            mach_guess = 1 + sqrt(abs(area_ratio - 1)) / sqrt(a)
+            for i in range(max_iterations):
+                error = self.area_ratio(mach_guess) - area_ratio
+                if all(abs(error)) < threshold:
+                    break
+                else:
+                    slope = self.area_ratio_derivative(mach_guess)
+                    mach_guess -= error / slope
+
+        return mach_guess
+    
+    
     def calculate(self):
         # 1D denotes values calculated using the 1D equations, which will be different to those using higher dimensional approahes such as method of
         # characteristics.
@@ -106,6 +152,8 @@ class Nozzle:
         self.exit_area_1D = self.throat_area * self.area_ratio_1D
         self.exit_radius_1D = np.sqrt(self.exit_area_1D/np.pi)
         self.exit_diameter_1D = 2*self.exit_radius_1D
+        
+        
         
     def describe(self):
         print("----------------NOZZLE----------------")
