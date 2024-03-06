@@ -4,6 +4,8 @@ from numpy import *
 import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
+from ocp_vscode import *
+#from grain import Grain
 
 class Nozzle:
     def __init__(
@@ -15,10 +17,14 @@ class Nozzle:
         mix_ratio:float,
         y:float,
         nozzle_OD:float,
+        angle_converging:float = np.pi/4,
+        postcomb_LD:float = 1,
         Pe:float = P_sl,
         Pa:float = P_sl,
-        contour:str = "moc",
-        N:int = 100
+        contour:str = "rao",
+        N:int = 4,
+        expansion_radius_ratio = 0.382,
+        **kwargs
     ):
         self.chamber_pressure = Pc
         self.exit_pressure_1D = Pe
@@ -34,9 +40,39 @@ class Nozzle:
         self.divisions = N
         self.nozzle_OD = nozzle_OD
         self.nozzle_OR = nozzle_OD/2
+        self.postcomb_LD = postcomb_LD
+        self.angle_converging = angle_converging
+        self.expansion_radius_ratio = expansion_radius_ratio
         
         self.calculate()
-        self.generate_contour()
+        # Checking for diverging contour type
+        if self.contour == "rao":
+            self.rao()
+        else:
+            print("Invalid Contour")
+        
+        # Checking if design dimensions were specified
+        dimensions = True
+        if "grain" in kwargs:
+            self.grain = kwargs["grain"]
+        else: dimensions = False
+        
+        if "lip_thickness" in kwargs:
+            self.lip_thickness = kwargs["lip_thickness"]
+        else: dimensions = False
+        
+        if "plate_thickness" in kwargs:
+            self.plate_thickness = kwargs["plate_thickness"]
+        else: dimensions = False
+        
+        if "sheath_length" in kwargs:
+            self.sheath_length = kwargs["sheath_length"]
+        else:
+            dimensions = False
+        
+        if dimensions == True:
+            self.generate_converging()
+            self.model()
         
     def calculate(self):
         # 1D denotes values calculated using the 1D equations, which will be different to those using higher dimensional approahes such as method of
@@ -82,23 +118,34 @@ class Nozzle:
         print("")
         
     def model(self):
-        model_xpoints = [self.xpoints[0]] + self.xpoints.tolist() + [self.xpoints[-1]] + [self.xpoints[0]]
-        model_ypoints = [self.nozzle_OR] + self.ypoints.tolist() + [self.nozzle_OR]+ [self.nozzle_OR]
+        # model_xpoints = [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [self.xpoints[0]*1000]
+        # model_ypoints = [self.nozzle_OR*1000] + (self.ypoints*1000).tolist() + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
+        model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
+        model_ypoints = [self.nozzle_OR*1000] + [self.grain.outer_radius*1000] + [self.grain.outer_radius*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_pts = []
         for i in range(len(model_xpoints)):
-            model_pts.append((model_xpoints[i], model_ypoints[i]))
-            
-            
-        geometry = cq.Workplane("XY").polyline(model_pts).revolve()
-        cq.exporters.export(geometry, "nozzle.step")
-        
-        
-        # print(model_pts)
+            model_pts.append((model_xpoints[i], 0, model_ypoints[i]))
+        self.geometry = cq.Workplane("front").polyline(model_pts).close().revolve(axisStart=(0,0,0), axisEnd=(1,0,0), angleDegrees=360)
         # plt.plot(model_xpoints, model_ypoints)
         # plt.axis('equal')
         # plt.show()
+        cq.exporters.export(self.geometry, "nozzle.STEP")
+
+        # (L, H, W, t) = (100.0, 20.0, 20.0, 1.0)
+        # pts = [
+        #     (0, H / 2.0),
+        #     (W / 2.0, H / 2.0),
+        #     (W / 2.0, (H / 2.0 - t)),
+        #     (t / 2.0, (H / 2.0 - t)),
+        #     (t / 2.0, (t - H / 2.0)),
+        #     (W / 2.0, (t - H / 2.0)),
+        #     (W / 2.0, H / -2.0),
+        #     (0, H / -2.0),
+        # ]
+        # result = cq.Workplane("front").polyline(pts)#.mirrorY().extrude(L)
+        # show(result)
         
-    def generate_contour(self):
+    def rao(self):
         # temp rao nozzle code
         
         # define some required variables
@@ -114,29 +161,29 @@ class Nozzle:
         )
         
         # converging throat section
-        t1  = linspace(radians(-135), radians(-90), self.divisions, False)
+        # t1  = linspace(radians(-135), radians(-90), self.divisions, False)
         
-        x_conv = 1.5 * self.throat_radius * cos(t1)
-        y_conv = (1.5 * self.throat_radius * sin(t1)) + (2.5 * self.throat_radius)
+        # x_conv = 1.5 * self.throat_radius * cos(t1)
+        # y_conv = (1.5 * self.throat_radius * sin(t1)) + (2.5 * self.throat_radius)
         
         # diverging throat section
         t2 = linspace(radians(-90), radians(parabola_angle_initial - 90), self.divisions, False)
         
-        x_div = 0.382 * self.throat_radius * cos(t2)
-        y_div = (0.382 * self.throat_radius * sin(t2)) + (1.382 * self.throat_radius)
+        x_div = self.expansion_radius_ratio * self.throat_radius * cos(t2)
+        y_div = (self.expansion_radius_ratio * self.throat_radius * sin(t2)) + ((1 + self.expansion_radius_ratio) * self.throat_radius)
         
         # start of parabola
         Nx = (
-            0.382
+            self.expansion_radius_ratio
             * self.throat_radius
             * cos(radians(parabola_angle_initial) - radians(90))
         )
         
         Ny = (
-            0.382
+            self.expansion_radius_ratio
             * self.throat_radius
             * sin(radians(parabola_angle_initial) - radians(90))
-        ) + (1.382 * self.throat_radius)   
+        ) + ((1 + self.expansion_radius_ratio) * self.throat_radius)   
         
         # intersection of line segments
         Qx = (
@@ -181,8 +228,46 @@ class Nozzle:
         )
           
         # add contour to x/y points
-        self.xpoints = concatenate((x_conv, x_div, x_para))
-        self.ypoints = concatenate((y_conv, y_div, y_para))
+        self.xpoints = concatenate((x_div, x_para))
+        self.ypoints = concatenate((y_div, y_para))
+        
+    def generate_converging(self):
+        e = (self.grain.outer_radius - self.lip_thickness - self.throat_radius)/np.tan(self.angle_converging)
+        
+        d = 3/2*self.expansion_radius_ratio*self.throat_radius*np.tan(self.angle_converging)
+        b = d
+        c = e - b/2 - 5/8*d
+        self.radius_postcomb = self.grain.outer_radius - self.lip_thickness
+        self.length_postcomb = self.postcomb_LD*(self.grain.outer_diameter - 2*self.lip_thickness)
+        L = self.length_postcomb + b + c + d
+        x_postccomb = np.linspace(0, self.length_postcomb, self.divisions, endpoint=False)
+        x_upstream_quartic = np.linspace(self.length_postcomb, self.length_postcomb + b, self.divisions, endpoint=False)
+        x_conical = np.linspace(self.length_postcomb + b, self.length_postcomb + b + c, 1, endpoint=False)
+        x_downstream_quartic = np.linspace(self.length_postcomb + b + c, self.length_postcomb + b + c + d, self.divisions, endpoint=False)
+        y_chamber = np.full(self.divisions, self.radius_postcomb)
+        y_upstream_quartic = self.radius_postcomb - b * tan(
+            self.angle_converging
+        ) / 2 * ((x_upstream_quartic - self.length_postcomb) / b) ** 3 * (
+            2 - (x_upstream_quartic - self.length_postcomb) / b
+        )
+        y_conical = (
+            self.radius_postcomb
+            + (self.length_postcomb + b / 2) * tan(self.angle_converging)
+            - x_conical * tan(self.angle_converging)
+        )
+        y_downstream_quartic = (L - x_downstream_quartic) ** 2 / (
+            12 * self.expansion_radius_ratio * self.throat_radius
+        ) * (6 - ((L - x_downstream_quartic) / d) ** 2) + self.throat_radius
+        x_converging = np.concatenate(
+            (x_postccomb, x_upstream_quartic, x_conical, x_downstream_quartic)
+        )
+        y_converging = np.concatenate(
+            (y_chamber, y_upstream_quartic, y_conical, y_downstream_quartic)
+        )
+        self.xpoints = np.concatenate((x_converging, self.xpoints + L))
+        self.ypoints = np.concatenate((y_converging, self.ypoints))
+        old_xpoints = self.xpoints
+        self.length = self.xpoints[-1]
         
     def plot(self):
         plt.plot(self.xpoints, self.ypoints)
