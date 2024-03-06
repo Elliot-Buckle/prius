@@ -24,6 +24,7 @@ class Nozzle:
         contour:str = "rao",
         N:int = 16,
         expansion_radius_ratio = 1,#0.382,
+        clearance:float = 0.1,
         **kwargs
     ):
         self.chamber_pressure = Pc
@@ -43,6 +44,7 @@ class Nozzle:
         self.postcomb_LD = postcomb_LD
         self.angle_converging = angle_converging
         self.expansion_radius_ratio = expansion_radius_ratio
+        self.clearance = clearance
         
         self.calculate()
         # Checking for diverging contour type
@@ -121,7 +123,7 @@ class Nozzle:
         # model_xpoints = [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [self.xpoints[0]*1000]
         # model_ypoints = [self.nozzle_OR*1000] + (self.ypoints*1000).tolist() + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
-        model_ypoints = [self.nozzle_OR*1000] + [self.grain.outer_radius*1000] + [self.grain.outer_radius*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
+        model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius+self.clearance)*1000] + [(self.grain.outer_radius+self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_pts = []
         for i in range(len(model_xpoints)):
             model_pts.append((model_xpoints[i], 0, model_ypoints[i]))

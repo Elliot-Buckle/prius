@@ -16,6 +16,7 @@ class Injector:
         ox_den:float,
         viscosity:float,
         precomb_LD:float = 1,
+        clearance:float = 0.1*10**-3,
         **kwargs
     ):
         self.nozzle = nozzle
@@ -27,6 +28,7 @@ class Injector:
         self.ox_density = ox_den
         self.dynamic_viscosity = viscosity
         self.precomb_LD = precomb_LD
+        self.clearance = clearance
         self.calculate()
         
         # Checking if design dimensions were specified
@@ -85,7 +87,7 @@ class Injector:
         self.geometry = (
             cq.Workplane("XY").cylinder(height, self.injector_OR)
             .faces(">Z")
-            .hole(self.grain.outer_diameter, self.sheath_length)
+            .hole(self.grain.outer_diameter + 2*self.clearance, self.sheath_length)
             .faces(">Z")
             .hole(self.precomb_diam, self.precomb_length + self. sheath_length)
             .faces("<Z")
@@ -96,6 +98,12 @@ class Injector:
             .polygon(self.number_orifices, (self.grain.port_diameter - self.orifice_diameter),forConstruction=True,circumscribed=True)
             .vertices()
             .hole(self.orifice_diameter)
+            .faces("<Z")
+            .sketch()
+            .circle(self.injector_OR)
+            .circle((self.injector_OR - self.lip_thickness), mode="s")
+            .finalize()
+            .cutBlind(self.plate_thickness)
         )
         cq.exporters.export(self.geometry, "injector.step")
     
