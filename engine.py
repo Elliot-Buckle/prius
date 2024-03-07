@@ -53,8 +53,9 @@ class Engine:
         # Second call of nozzle to do modelling based on grain results
         self.nozzle = Nozzle(Pc, Tc, actual_thrust, M, mix_ratio, y, cap_OD, plate_thickness=plate_t, lip_thickness=lip_t, grain=self.grain, sheath_length=25*10**-3)
         
-        self.grain.model()
-        show(self.injector.geometry)
+        self.model()
+        show(self.nozzle.geometry)
+        #self.injector.model()
         #self.nozzle.plot()
         #show(self.nozzle.geometry)
         self.describe()
@@ -65,10 +66,20 @@ class Engine:
         self.injector.describe()
         self.grain.describe()
         
+    def model(self):
+        self.grain.model()
+        self.injector.model()
+        self.nozzle.model()
+        self.engine = cq.Assembly()
+        self.engine.add(self.nozzle.geometry, name="nozzle")
+        self.engine.add(self.grain.geometry, name="grain")
+        self.engine.add(self.injector.geometry, name="injector")
+        #self.engine.constrain("grain@faces@>X", )
+        
     
         
 
-engine = Engine(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, ox_den=786.6, cd=0.44, viscosity=3.237*10**-4,
+engine = Engine(Pc=3*10**6, Tc=3252.15, thrust=300, M=0.025423, mix_ratio=6.1, y=1.2501, ox_den=786.6, cd=0.44, viscosity=3.237*10**-4,
                 tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, a=0.417, n=0.347, fuel_den=902, ox_flux=200,
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 7*10**-3, manifold_length = 40*10**-3,
                 sheath_l=25*10**-3)

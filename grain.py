@@ -26,7 +26,8 @@ class Grain:
         self.calculate()
         
     def calculate(self):
-        self.regression_rate = 10**-3*self.regression_constant*(self.ox_flux/10)**self.regression_exponent
+        #self.regression_rate = 10**-3*self.regression_constant*(self.ox_flux/10)**self.regression_exponent
+        self.regression_rate = 4.36*10**-5*self.ox_flux**0.62
         
         if self.geometry == "tube":
             self.port_area = self.injector.ox_flow/self.ox_flux
@@ -45,7 +46,7 @@ class Grain:
         
     def model(self):
         if self.port_diameter < self.outer_diameter:
-            self.geometry = cq.Workplane("XY").cylinder(self.grain_length*1000,self.outer_radius*1000).faces(">Z").workplane().hole(self.port_diameter*1000)
+            self.geometry = cq.Workplane("YZ").cylinder(self.grain_length*1000,self.outer_radius*1000).faces(">X").workplane().hole(self.port_diameter*1000)
             #show(self.geometry)
             cq.exporters.export(self.geometry, "fuel_grain.step")
         else:

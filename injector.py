@@ -84,26 +84,27 @@ class Injector:
         self.precomb_radius = self.precomb_diam/2
         self.precomb_length = self.precomb_LD*self.precomb_diam
         height = self.precomb_length + self.sheath_length + self.orifice_length + self.manifold_length
+        
         self.geometry = (
-            cq.Workplane("XY").cylinder(height, self.injector_OR)
+            cq.Workplane("XY").cylinder(height*1000, self.injector_OR*1000)
             .faces(">Z")
-            .hole(self.grain.outer_diameter + 2*self.clearance, self.sheath_length)
+            .hole(self.grain.outer_diameter*1000 + 2*self.clearance*1000, self.sheath_length*1000)
             .faces(">Z")
-            .hole(self.precomb_diam, self.precomb_length + self. sheath_length)
+            .hole(self.precomb_diam*1000, self.precomb_length*1000 + self.sheath_length*1000)
             .faces("<Z")
             .workplane()
-            .hole(self.precomb_diam, self.manifold_length)
+            .hole(self.precomb_diam*1000, self.manifold_length*1000)
             .faces(">Z")
             .workplane()
-            .polygon(self.number_orifices, (self.grain.port_diameter - self.orifice_diameter),forConstruction=True,circumscribed=True)
+            .polygon(self.number_orifices, (self.grain.port_diameter*1000 - self.orifice_diameter*1000),forConstruction=True,circumscribed=True)
             .vertices()
-            .hole(self.orifice_diameter)
+            .hole(self.orifice_diameter*1000)
             .faces("<Z")
             .sketch()
-            .circle(self.injector_OR)
-            .circle((self.injector_OR - self.lip_thickness), mode="s")
+            .circle(self.injector_OR*1000)
+            .circle((self.injector_OR*1000 - self.lip_thickness*1000), mode="s")
             .finalize()
-            .cutBlind(self.plate_thickness)
+            .cutBlind(self.plate_thickness*1000)
         )
         cq.exporters.export(self.geometry, "injector.step")
     

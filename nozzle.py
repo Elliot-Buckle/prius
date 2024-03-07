@@ -23,8 +23,8 @@ class Nozzle:
         Pa:float = P_sl,
         contour:str = "rao",
         N:int = 16,
-        expansion_radius_ratio = 1,#0.382,
-        clearance:float = 0.1,
+        expansion_radius_ratio = 0.382,
+        clearance:float = 0.1*10**-3,
         **kwargs
     ):
         self.chamber_pressure = Pc
@@ -91,9 +91,9 @@ class Nozzle:
             (self.mol_mass*(self.ratio_of_heats - 1))*R*self.chamber_temp*(1 - (self.exit_pressure_1D/self.chamber_pressure)**((self.ratio_of_heats - 1)/self.ratio_of_heats))
             )
         
-        self.throat_mass_flux = self.chamber_pressure*self.ratio_of_heats*np.sqrt(
+        self.throat_mass_flux = (self.chamber_pressure*self.ratio_of_heats*np.sqrt(
             (2/(self.ratio_of_heats + 1))**((self.ratio_of_heats + 1)/(self.ratio_of_heats - 1))
-        )/np.sqrt(self.ratio_of_heats*R*self.chamber_temp)
+        )/np.sqrt(self.ratio_of_heats*R*self.chamber_temp/self.mol_mass))
         
         self.isp_m_s = (self.exit_vel_1D*self.throat_mass_flux + self.area_ratio_1D*(self.exit_pressure_1D - self.ambient_pressure))/self.throat_mass_flux
         
@@ -122,8 +122,8 @@ class Nozzle:
     def model(self):
         # model_xpoints = [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [self.xpoints[0]*1000]
         # model_ypoints = [self.nozzle_OR*1000] + (self.ypoints*1000).tolist() + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
-        model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
-        model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius+self.clearance)*1000] + [(self.grain.outer_radius+self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
+        model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
+        model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius + self.clearance)*1000] + [(self.grain.outer_radius + self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_pts = []
         for i in range(len(model_xpoints)):
             model_pts.append((model_xpoints[i], 0, model_ypoints[i]))
