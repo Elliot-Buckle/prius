@@ -167,19 +167,27 @@ class Nozzle:
         print(f"Expansion ratio: {round(self.area_ratio_1D, 2)}")
         print("")
         
-    def model(self):
+    def model(self, export=False, resolution=4):
         # model_xpoints = [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [self.xpoints[0]*1000]
         # model_ypoints = [self.nozzle_OR*1000] + (self.ypoints*1000).tolist() + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
         model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius + self.clearance)*1000] + [(self.grain.outer_radius + self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]
         model_pts = []
+        self.grid_x_points = np.linspace(0, self.xpoints[-1], resolution)
+        self.grid_y_points = np.linspace(0, self.ypoints[-1], resolution)
+        self.bottom_y_points = np.interp(self.grid_x_points, self.xpoints, self.ypoints)
+        self.grid_x_values, self.grid_y_values = np.meshgrid(self.grid_x_points, self.grid_y_points)
+        
+        self.nozzle_OD
+        #self.bottom_y_pts = np.array
         for i in range(len(model_xpoints)):
             model_pts.append((model_xpoints[i], 0, model_ypoints[i]))
         self.geometry = cq.Workplane("front").polyline(model_pts).close().revolve(axisStart=(0,0,0), axisEnd=(1,0,0), angleDegrees=360)
         # plt.plot(model_xpoints, model_ypoints)
         # plt.axis('equal')
         # plt.show()
-        cq.exporters.export(self.geometry, "nozzle.step")
+        if export:
+            cq.exporters.export(self.geometry, "nozzle.step")
 
         # (L, H, W, t) = (100.0, 20.0, 20.0, 1.0)
         # pts = [

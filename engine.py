@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
 from ocp_vscode import *
+from rocketcea.cea_obj import CEA_Obj
 
 class Engine:
     def __init__(
@@ -53,23 +54,23 @@ class Engine:
         # Second call of nozzle to do modelling based on grain results
         self.nozzle = Nozzle(Pc, Tc, actual_thrust, M, mix_ratio, y, cap_OD, plate_thickness=plate_t, lip_thickness=lip_t, grain=self.grain, sheath_length=25*10**-3)
         
-        self.model()
+        self.model(export=True)
         show(self.nozzle.geometry)
         #self.injector.model()
         #self.nozzle.plot()
         #show(self.nozzle.geometry)
         self.describe()
-        # self.nozzle.plot()
+        #self.nozzle.plot()
 
     def describe(self):
         self.nozzle.describe()
         self.injector.describe()
         self.grain.describe()
         
-    def model(self):
+    def model(self, export=False):
         self.grain.model()
         self.injector.model()
-        self.nozzle.model()
+        self.nozzle.model(export)
         self.engine = cq.Assembly()
         self.engine.add(self.nozzle.geometry, name="nozzle")
         self.engine.add(self.grain.geometry, name="grain")
