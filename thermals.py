@@ -23,22 +23,31 @@ class Thermal:
         self.melting_point = melting_point
         self.material_rho = material_density
         
-        nozzle.model(export=False, resolution=32)
+        nozzle.model(export=False, resolution=128)
         
         # Determine masses of cells in array
         
         # Create 2D array for cell masses
         grid_shape = np.shape(nozzle.grid_x)
+        cell_array_shape = (grid_shape[0] - 1, grid_shape[1] - 1)
         print(grid_shape)
-        cell_masses = np.full((grid_shape[0] - 1, grid_shape[1] - 1), 'nan')
+        cell_masses = np.full(cell_array_shape, NaN)
         
         print(cell_masses)
         
         # Iterate over columns and rows
-        for column in range(np.size(cell_masses)):
-            for cell in range(column - 1):
-                cell_volume = (nozzle.grid_x[cell - 1] + nozzle.grid_x[cell]) * ((nozzle.grid_y[cell] - nozzle.grid_y[cell - 1]) * pi)
-                cell = cell_volume / self.material_rho
+        for column in range(cell_array_shape[0]):
+            for row in range(cell_array_shape[1]):
+                # cell_volume = (nozzle.grid_x[cell - 1] + nozzle.grid_x[cell]) * ((nozzle.grid_y[cell] - nozzle.grid_y[cell - 1]) * pi)
+                cell_area = abs(0.5*(nozzle.grid_x[row, column] - nozzle.grid_x[row, column + 1])*(nozzle.grid_y[row + 1, column] - nozzle.grid_y[row, column] + nozzle.grid_y[row, column + 1] - nozzle.grid_y[row, column]))
+                cell_volume = abs(cell_area*np.pi*(nozzle.grid_y[row + 1, column] + nozzle.grid_y[row, column] + nozzle.grid_y[row, column + 1] + nozzle.grid_y[row, column])/2)
+                #cell_volume = 0.5*(nozzle.grid_x_points[column + 1] - nozzle.grid_x_points[column])*((nozzle.grid_y_points[row + 1] - nozzle.grid_y_points[row + 1]) + (nozzle.grid_y_points[row] - nozzle.grid_y_points[row]))*2*pi*nozzle.grid_y_points[row]
+                cell_mass = abs(cell_volume * self.material_rho)
+                cell_masses[row, column] = cell_mass
+                print(cell_area, cell_volume, cell_mass)
+                
+        plt.imshow(cell_masses)
+        plt.show()
         
         print("-----------------------")  
         print(cell_masses)
