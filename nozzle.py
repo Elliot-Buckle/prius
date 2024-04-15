@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
 from ocp_vscode import *
+from propellants import *
 #from grain import Grain
 
 class Nozzle:
