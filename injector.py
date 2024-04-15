@@ -11,10 +11,7 @@ class Injector:
         nozzle:Nozzle,
         orifice_diam:float,
         tank_pressure:float,
-        crit_pressure_drop:float,
-        Cd:float,
-        ox_den:float,
-        viscosity:float,
+        oxidizer:str,
         precomb_LD:float = 1,
         clearance:float = 0.1*10**-3,
         **kwargs
@@ -23,12 +20,12 @@ class Injector:
         self.mixture_ratio = nozzle.mixture_ratio
         self.orifice_diameter = orifice_diam
         self.tank_pressure = tank_pressure
-        self.critical_pressure_drop = crit_pressure_drop
-        self.discharge_coefficient = Cd
-        self.ox_density = ox_den
-        self.dynamic_viscosity = viscosity
+        self.critical_pressure_drop = 17.4*10**5
+        self.discharge_coefficient = 0.77
+        self.ox_density = 786.6
         self.precomb_LD = precomb_LD
         self.clearance = clearance
+        self.oxidizer = oxidizer
         self.calculate()
         
         # Checking if design dimensions were specified
@@ -75,8 +72,9 @@ class Injector:
         print(f"Manifold Pressure (bar): {round(self.pressure_manifold*10**-5, 2)}")
         print(f"Number of orifices: {int(self.number_orifices)}")
         print(f"Injection velocity (m/s): {round(self.injection_velocity, 2)}")
-        print(f"Reynolds number: {round(self.reynolds_number, 2)}")
-        print(f"Condition: {self.condition}")
+        if self.oxidizer == "N2O":
+            print(f"Condition: {self.condition}")
+            print(f"Reynolds number: {round(self.reynolds_number, 2)}")
         print("")
         
     def model(self):
@@ -86,20 +84,20 @@ class Injector:
         height = self.precomb_length + self.sheath_length + self.orifice_length + self.manifold_length
         
         self.geometry = (
-            cq.Workplane("XY").cylinder(height*1000, self.injector_OR*1000)
-            .faces(">Z")
+            cq.Workplane("YZ").cylinder(height*1000, self.injector_OR*1000)
+            .faces(">X")
             .hole(self.grain.outer_diameter*1000 + 2*self.clearance*1000, self.sheath_length*1000)
-            .faces(">Z")
+            .faces(">X")
             .hole(self.precomb_diam*1000, self.precomb_length*1000 + self.sheath_length*1000)
-            .faces("<Z")
+            .faces("<X")
             .workplane()
             .hole(self.precomb_diam*1000, self.manifold_length*1000)
-            .faces(">Z")
+            .faces(">X")
             .workplane()
             .polygon(self.number_orifices, (self.grain.port_diameter*1000 - self.orifice_diameter*1000),forConstruction=True,circumscribed=True)
             .vertices()
             .hole(self.orifice_diameter*1000)
-            .faces("<Z")
+            .faces("<X")
             .sketch()
             .circle(self.injector_OR*1000)
             .circle((self.injector_OR*1000 - self.lip_thickness*1000), mode="s")
@@ -114,43 +112,50 @@ class Injector:
         
         # Determine pressure drop
         self.pressure_drop = 0.3 * self.nozzle.chamber_pressure
-        if self.nozzle.chamber_pressure < self.tank_pressure - self.critical_pressure_drop:
-            # Determine choked injection area
-            self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.critical_pressure_drop * self.ox_density))
-            # Determine choked flow speed
-            self.injection_velocity = np.sqrt(2 * self.critical_pressure_drop / self.ox_density)
-            self.condition = "choked"
-            
-        elif self.pressure_drop + self.nozzle.chamber_pressure > self.tank_pressure:
-            # Caps manifold pressure at tank pressure
-            self.pressure_drop = self.tank_pressure - self.nozzle.chamber_pressure
-            # Determines injection area
-            self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.pressure_drop * self.ox_density))
-            # Determine choked flow speed
-            self.injection_velocity = np.sqrt(2 * self.pressure_drop / self.ox_density)
-            self.condition = "high chamber pressure"
-        else:
-            # Otherwise determine injection area
-            self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.pressure_drop * self.ox_density))
-            # Determine flow speed
-            self.injection_velocity = np.sqrt(2 * self.pressure_drop / self.ox_density)
-            self.condition = "single phase incompressible"
-            
-        
-        # Determine orifice area
-        self.orifice_area = 1/4*np.pi*self.orifice_diameter**2
-        
-        # Determine number of orifices (rounded up)
-        self.number_orifices = round(self.injection_area/self.orifice_area)
-        
-        # Determine actual oxidiser flow rate
-        self.ox_flow = self.discharge_coefficient*self.injection_velocity*self.ox_density*self.number_orifices*self.orifice_area
         
         # Determine manifold pressure
         self.pressure_manifold = self.nozzle.chamber_pressure + self.pressure_drop
         
-        if self.dynamic_viscosity == 0:
-            self.reynolds_number = 'nan'
+        # Determine orifice area
+        self.orifice_area = 1/4*np.pi*self.orifice_diameter**2
+        
+        # Liquid Nitrous specific calcs
+        if self.oxidizer=="N2O":
+            if self.nozzle.chamber_pressure < self.tank_pressure - self.critical_pressure_drop:
+                # Determine choked injection area
+                self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.critical_pressure_drop * self.ox_density))
+                # Determine choked flow speed
+                self.injection_velocity = np.sqrt(2 * self.critical_pressure_drop / self.ox_density)
+                self.condition = "choked"
+                
+            elif self.pressure_drop + self.nozzle.chamber_pressure > self.tank_pressure:
+                # Caps manifold pressure at tank pressure
+                self.pressure_drop = self.tank_pressure - self.nozzle.chamber_pressure
+                # Determines injection area
+                self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.pressure_drop * self.ox_density))
+                # Determine choked flow speed
+                self.injection_velocity = np.sqrt(2 * self.pressure_drop / self.ox_density)
+                self.condition = "high chamber pressure"
+            else:
+                # Otherwise determine injection area
+                self.injection_area = self.ox_flow / (self.discharge_coefficient * np.sqrt(2 * self.pressure_drop * self.ox_density))
+                # Determine flow speed
+                self.injection_velocity = np.sqrt(2 * self.pressure_drop / self.ox_density)
+                self.condition = "single phase incompressible"
+                
+            
+            # Determine number of orifices (rounded up)
+            self.number_orifices = round(self.injection_area/self.orifice_area)
+            
+            # Determine actual oxidiser flow rate
+            self.ox_flow = self.discharge_coefficient*self.injection_velocity*self.ox_density*self.number_orifices*self.orifice_area
+
+            #determine reynolds number
+            self.reynolds_number = self.ox_density*self.injection_velocity*self.orifice_diameter/(3.237*10**-4)
+        # Gaseous oxygen specific calcs
+        elif self.oxidizer=="GOX":
+            self.number_orifices = round(426.1*self.ox_flow/(self.orifice_area*self.nozzle.chamber_pressure))
+            self.injection_velocity = 165.8450071
         else:
-            self.reynolds_number = self.ox_density*self.injection_velocity*self.orifice_diameter/self.dynamic_viscosity
+            print("unrecognised oxidizer")
         

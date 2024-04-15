@@ -1,33 +1,33 @@
 from injector import Injector
 import numpy as np
 import cadquery as cq
+from propellants import *
 from ocp_vscode import *
 
 class Grain:
     def __init__(
         self,
         injector:Injector,
-        a:float,
-        n:float,
-        fuel_den:float,
+        fuel:str,
+        oxidizer:str,
         ox_flux:float,
         OD:float,
         geometry:str = "tube"
     ):
+        self.propellant = fuel + "/" + oxidizer
         self.injector = injector
-        self.regression_constant = a
-        self.regression_exponent = n
+        self.regression_constant = regression_coefficients[self.propellant]["a"]
+        self.regression_exponent = regression_coefficients[self.propellant]["n"]
         self.ox_flux = ox_flux
         self.geometry = geometry.casefold()
-        self.fuel_density = fuel_den
+        self.fuel_density = densities[fuel]
         self.outer_diameter = OD
         self.outer_radius = OD/2
         
         self.calculate()
         
     def calculate(self):
-        #self.regression_rate = 10**-3*self.regression_constant*(self.ox_flux/10)**self.regression_exponent
-        self.regression_rate = 4.36*10**-5*self.ox_flux**0.62
+        self.regression_rate = self.regression_constant*self.ox_flux**self.regression_exponent
         
         if self.geometry == "tube":
             self.port_area = self.injector.ox_flow/self.ox_flux
