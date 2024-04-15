@@ -20,7 +20,7 @@ h,cal=-24620     t(k)=293.15
 """,
 
 "HDPE":"""
-fuel C2H4 C S H 4     wt%=100
+fuel C2H4 C 2 H 4     wt%=100
 h,cal=-6118.546845   t(k)=293.15
 """
 }
@@ -36,4 +36,13 @@ regression_coefficients = {
     "PMMA/N2O":{"a":0.000614, "n":0.335},
     "HTPB/N2O":{"a":0.000927, "n":0.347},
     "ABS/N2O":{"a":0.000103, "n":0.215},             
+}
+
+densities = {
+    "HTPB":930,
+    "PMMA":1180,
+    "HDPE":961,
+    "ABS":975,
+    "PC":1200,
+    "PLA":1240
 }
