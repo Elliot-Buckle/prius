@@ -2,6 +2,7 @@ from constants import *
 from injector import Injector
 from nozzle import Nozzle
 from grain import Grain
+from structure import Strucutre
 import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
@@ -52,7 +53,9 @@ class Engine:
         # Second call of nozzle to do modelling based on grain results
         self.nozzle = Nozzle(fuel, oxidizer, Pc, actual_thrust, cap_OD, plate_thickness=plate_t, lip_thickness=lip_t, grain=self.grain, sheath_length=sheath_l, Pe=Pe, Pa=Pa)
         
-        self.model(export=True)
+        # Generating Structure
+        self.structure = Strucutre(self.nozzle, bolt_OD=5*10**-3, bolt_ID=4.134*10**-3, bolt_distance=100*10**-3, yield_stress=400*10**6, FoS=4, grain=self.grain, injector=self.injector)
+        self.model()
         #show(self.grain.geometry)
         #self.injector.model()
         #self.nozzle.plot()
@@ -69,22 +72,34 @@ class Engine:
         self.nozzle.describe()
         self.injector.describe()
         self.grain.describe()
+        self.structure.describe()
         
     def model(self, export=False):
         self.grain.model()
         self.injector.model()
         self.nozzle.model()
+        self.structure.model()
         self.engine = cq.Assembly(name="Engine")
         # self.engine.add(self.nozzle.geometry, name="nozzle", loc=cq.Location((100,0,0), (1,0,0), 0))
-        self.engine.add(self.nozzle.geometry, name="nozzle", color="gray")
+        self.engine.add(self.nozzle.geometry, name="nozzle", color="silver")
         self.engine.add(self.grain.geometry, name="grain", color="white")
-        self.engine.add(self.injector.geometry, name="injector", color="gray")
+        self.engine.add(self.injector.geometry, name="injector", color="silver")
+        self.engine.add(self.structure.geometry, name="plate1", color="gray")
+        self.engine.add(self.structure.geometry, name="plate2", color="gray")
+        # for i in range(self.structure.bolts):
+        #     self.engine.add(self.structure.bolt_geometry, name="bolt"+str(i+1), color="gray")
         # aligning faces of nozzle and grain
         self.engine.constrain("nozzle@faces@>Z", "grain@faces@<X", "Axis")
         # putting two together
         self.engine.constrain("nozzle@faces@>X[1]", "grain@faces@<X", "Point")
         # aligning faces of injector and grain
         self.engine.constrain("injector@faces@<X[1]", "grain@faces@>X", "Plane")
+        # aligning nozzle plate
+        self.engine.constrain("plate1@faces@>Z", "nozzle@faces@>X", "Axis")
+        self.engine.constrain("plate1@faces@<Z", "nozzle@faces@>X", "Point")
+        # aligning injector plate
+        self.engine.constrain("plate2@faces@>Z", "injector@faces@>X", "Axis")
+        self.engine.constrain("plate2@faces@>Z", "injector@faces@<X", "Point")
         self.engine.solve()
         
         show(self.engine)
@@ -92,7 +107,7 @@ class Engine:
     
         
 # Oxidizer can be either N2O or GOX
-engine = Engine(fuel="HDPE", oxidizer="N2O", Pc=1.5*10**6, thrust=300, ox_den=786.6, cd=0.44,
+engine = Engine(fuel="HDPE", oxidizer="N2O", Pc=3*10**6, thrust=300, ox_den=786.6, cd=0.44,
                 tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, ox_flux=200,
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
                 sheath_l=15*10**-3)

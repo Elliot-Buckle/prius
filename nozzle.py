@@ -202,6 +202,7 @@ class Nozzle:
             external_indicies = np.nonzero(self.grid_y[:, column] < self.bottom_y_points[column])
             self.grid_y[external_indicies, column] = 'nan'
             self.grid_x[external_indicies, column] = 'nan'
+            # Snapping y values to contour
         
         # Generating model
         for i in range(len(model_xpoints)):
