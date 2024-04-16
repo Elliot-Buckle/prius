@@ -135,15 +135,15 @@ class Nozzle:
         instance = CEA_Obj(oxName=self.oxidizer, fuelName=self.fuel)
         
         # Unit conversion
-        Pc_psi = self.chamber_pressure*0.0001450377
-        Pa_psi = self.ambient_pressure*0.0001450377
+        self.Pc_psi = self.chamber_pressure*0.0001450377
+        self.Pa_psi = self.ambient_pressure*0.0001450377
         
         # Stoichiometri mixture ratio
         self.mixture_ratio = instance.getMRforER(ERphi=True)
         
         # self.throat_pressure = self.chamber_pressure*((self.ratio_of_heats + 1)/2)**(self.ratio_of_heats/(1 - self.ratio_of_heats))
         
-        self.area_ratio_1D = instance.get_eps_at_PcOvPe(Pc=Pc_psi, MR=self.mixture_ratio, PcOvPe=self.chamber_pressure/self.exit_pressure_1D, frozen=1)
+        self.area_ratio_1D = instance.get_eps_at_PcOvPe(Pc=self.Pc_psi, MR=self.mixture_ratio, PcOvPe=self.chamber_pressure/self.exit_pressure_1D, frozen=1)
         
         # self.exit_vel_1D = np.sqrt(
         #     2*self.ratio_of_heats/
@@ -158,12 +158,12 @@ class Nozzle:
         
         # self.isp_s = self.isp_m_s/g
         
-        self.performance = instance.estimate_Ambient_Isp(Pc_psi, self.mixture_ratio, self.area_ratio_1D, Pa_psi, frozen=1)
+        self.performance = instance.estimate_Ambient_Isp(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, self.Pa_psi, frozen=1)
         self.isp_s = self.performance[0]
         self.isp_m_s = self.isp_s*g
         self.mass_flow = self.thrust/self.isp_m_s
-        self.cstar = instance.get_Cstar(Pc_psi, self.mixture_ratio)*0.3048
-        self.throat_mass_flux = self.cstar*instance.get_Densities(Pc_psi, self.mixture_ratio, self.area_ratio_1D, frozen=1)[1]*16.018463
+        self.cstar = instance.get_Cstar(self.Pc_psi, self.mixture_ratio)*0.3048
+        self.throat_mass_flux = self.cstar*instance.get_Densities(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, frozen=1)[1]*16.018463
         self.throat_area = self.mass_flow/self.throat_mass_flux
         
         self.throat_radius = np.sqrt(self.throat_area/np.pi)
@@ -207,8 +207,11 @@ class Nozzle:
             # get indicies of points ON GRID that lie on the wall
             grid_wall_index = np.array([np.min(np.argwhere(self.grid_y[:, column] > self.gas_side_y_values[column])), column])
             self.grid_wall_indices[column, :] = grid_wall_index
-            self.grid_y[grid_wall_index[0], grid_wall_index[1]] = self.gas_side_y_values[column]
-            
+            # Snapping y values to contoru
+            # self.grid_y[grid_wall_index[0], grid_wall_index[1]] = self.gas_side_y_values[column]
+        # print(self.grid_y[self.grid_wall_indices])
+        # print("")
+        # print(self.gas_side_y_values)
         # Snapping y values to contour
         # print(self.grid_wall_indices)
         # print(self.gas_side_y_values)
