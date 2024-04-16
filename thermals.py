@@ -5,7 +5,7 @@ import numpy as np
 from numpy import *
 from ocp_vscode import *
 import matplotlib.pyplot as plt
-
+from rocketcea.cea_obj import ispObj
 
 class Thermal:
     def __init__(
@@ -99,8 +99,17 @@ class Thermal:
                 cell_srf_areas_fore[row, column] = cell_srf_area
                 
         # plt.imshow(cell_srf_areas_fore)
-        # #plt.imshow(cell_srf_areas_outer)
+        # plt.imshow(cell_srf_areas_outer)
         # plt.show()
+                
+    # Calculation of heat flux between gas inside chamber and wall of chamber        
+    def heat_flux_chamber(self):
+        # get variables (who decided that cal/g K was a good unit for Cp smh)
+        
+        # returns tuple of Cp, viscosity, conductivity, prandtl number
+        transport_properties = ispObj.get_Chamber_Transport(Pc=Nozzle.Pc_psi, MR=Nozzle.mixture_ratio, frozen=1)
+        
+               
         
 if __name__ == "__main__":
     #nozzle = Nozzle(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, nozzle_OD=75*10**-3)
