@@ -5,6 +5,7 @@ import numpy as np
 from numpy import *
 from ocp_vscode import *
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from rocketcea.cea_obj import CEA_Obj
 from utilities import *
 
@@ -175,8 +176,9 @@ class Thermal:
         self.nozzle.model()
         i=0
         time = 0
+        fig, ax = plt.subplots()
+        ims = []
         while np.nanmax(self.cell_temps) < self.melting_point:
-            #print("im here!")
             # Create array for adjacent cell temperature
             # Apply heat flux to cells along wall
             self.wall_delta_heat = timestep * self.cell_srf_areas_outer[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns] * self.wall_heat_fluxes(self.cell_temps[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns])
@@ -204,18 +206,29 @@ class Thermal:
             #print(np.min(delta_T))
             self.cell_temps += delta_T
             # print(np.nanmax(self.delta_cell_heat), np.nanmax(delta_T))
-            time += timestep
-            i+=1
             # plt.imshow(self.cell_temps)
             # plt.title(f"t = {round(time, 3)}s")
             #plt.pause(timestep)
             # if i == 1000:
             #     break
-        plt.imshow(self.cell_temps, cmap="cividis")
-        plt.title(f"t = {round(time, 3)}s")
-        plt.colorbar()
-        plt.show()
+            
+            if i % 250 == 0:
+                im = ax.imshow(self.cell_temps, cmap="cividis", animated=True)
+                #im = ax.colorbar()
+                #im = ax.title(f"t = {round(time, 3)}s")
+                if i == 0:
+                    ax.imshow(self.cell_temps, cmap="cividis")
+                ims.append([im])
+            
+            time += timestep
+            i+=1
+            
+        sim = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+        sim.save("heat_sim.gif")
+        plt.show()  
+        
 
+        
             
             
             
