@@ -1,105 +1,105 @@
 import numpy as np
 import constants
 
-def performance(self):
+def performance(contour_mach, area_exit, velocity_exit, pressure_exit, pressure_ambient, mass_flowrate):
     """
     Calculates performance parameters along the contour
     """
 
-    self.contour_temperature = self.temp_from_mach(self.contour_mach)
-    self.contour_pressure = self.pressure_from_mach(self.contour_mach)
-    self.contour_density = self.density_from_mach(
-        self.contour_pressure, self.contour_temperature
+    contour_temperature = temp_from_mach(contour_mach)
+    contour_pressure = pressure_from_mach(contour_mach)
+    contour_density = density_from_mach(
+        contour_pressure, contour_temperature
     )
-    self.contour_mdot = self.mass_flux(self.contour_mach)
-    self.contour_velocity = self.velocity_from_mach(
-        temperature=self.contour_temperature, mach=self.contour_mach
+    contour_mdot = mass_flux(contour_mach)
+    contour_velocity = velocity_from_mach(
+        temperature=contour_temperature, mach=contour_mach
     )
-    self.specific_impulse = (
-        self.velocity_exit
-        + self.area_exit
-        * (self.pressure_exit - self.pressure_ambient)
-        / self.mass_flowrate
+    specific_impulse = (
+        velocity_exit
+        + area_exit
+        * (pressure_exit - pressure_ambient)
+        / mass_flowrate
     )
-    self.thrust = constants.g * self.mass_flowrate * self.specific_impulse
+    thrust = constants.g * mass_flowrate * specific_impulse
 
-def velocity_sound(self, t: float, rdot: float, y: float):
+def velocity_sound(t: float, rdot: float, y: float):
     """Velocity of Sound"""
     return np.sqrt(y * rdot * t)
 
-def velocity_from_mach(self, temperature, mach):
+def velocity_from_mach(temperature, mach, ratio_specific_heat, mass_molar):
     """Velocity from Mach"""
     return mach * np.sqrt(
-        self.ratio_specific_heat * constants.R * temperature / self.mass_molar
+        ratio_specific_heat * constants.R * temperature / mass_molar
     )
 
-def density_from_mach(self, pressure, temperature):
+def density_from_mach(pressure, temperature, mass_molar):
     """Density from Mach"""
-    return pressure / ((constants.R / self.mass_molar) * temperature)
+    return pressure / ((constants.R / mass_molar) * temperature)
 
-def temp_from_mach(self, mach):
+def temp_from_mach(mach, temperature_chamber, ratio_specific_heat):
     """Temp from Mach"""
-    return self.temperature_chamber / (
-        1 + (self.ratio_specific_heat - 1) / 2 * mach**2
+    return temperature_chamber / (
+        1 + (ratio_specific_heat - 1) / 2 * mach**2
     )
 
-def pressure_from_mach(self, mach):
+def pressure_from_mach(mach, pressure_chamber, ratio_specific_heat):
     """Pressure from mach"""
-    return self.pressure_chamber / (
-        1 + (self.ratio_specific_heat - 1) / 2 * mach**2
-    ) ** (self.ratio_specific_heat / (self.ratio_specific_heat - 1))
+    return pressure_chamber / (
+        1 + (ratio_specific_heat - 1) / 2 * mach**2
+    ) ** (ratio_specific_heat / (ratio_specific_heat - 1))
 
-def mass_flux(self, mach):
+def mass_flux(mach, ratio_specific_heat, pressure_chamber, temperature_chamber, mass_molar):
     """Mass Flux from Mach"""
-    temperature = self.temp_from_mach(mach)
-    k = self.ratio_specific_heat
+    temperature = temp_from_mach(mach)
+    k = ratio_specific_heat
     return (
-        self.pressure_chamber
+        pressure_chamber
         / temperature
-        * (temperature / self.temperature_chamber) ** (k / (k - 1))
+        * (temperature / temperature_chamber) ** (k / (k - 1))
         * np.sqrt(
             2
-            * self.mass_molar
-            * (self.temperature_chamber - temperature)
+            * mass_molar
+            * (temperature_chamber - temperature)
             / (constants.R * (k - 1))
         )
     )
 
-def area_ratio(self, mach):
+def area_ratio(mach, ratio_specific_heat):
     """Area Ratio"""
-    k = self.ratio_specific_heat
+    k = ratio_specific_heat
     return 1 / mach * ((2 + (k - 1) * mach**2) / (k + 1)) ** ((k + 1) / (2 * k - 2))
 
-def area_ratio_derivative(self, mach):
+def area_ratio_derivative(self, mach, ratio_specific_heat):
     """Area Ratio Derivative"""
-    k = self.ratio_specific_heat
+    k = ratio_specific_heat
     return (
         (2 * mach**2 - 2)
         * (((k - 1) * mach**2 + 2) / (k + 1)) ** ((k + 1) / (2 * k - 2))
         / ((k - 1) * mach**4 + 2 * mach**2)
     )
 
-def mach_from_area(self, area, is_subsonic: bool = False):
+def mach_from_area(area, area_throat, ratio_specific_heat, is_subsonic: bool = False):
     """Mach from area"""
 
     max_iterations = 32
     threshold = 10**-16
-    area_ratio = area / self.area_throat
+    area_ratio = area / area_throat
 
     if is_subsonic:
         mach_guess = 1 / area_ratio
         for i in range(max_iterations):
-            error = self.area_ratio(mach_guess) - area_ratio
+            error = area_ratio(mach_guess) - area_ratio
             if all(abs(error)) >= threshold:
-                slope = self.area_ratio_derivative(mach_guess)
+                slope = area_ratio_derivative(mach_guess)
                 mach_guess -= error / slope
     else:
-        a = 2 / (self.ratio_specific_heat + 1)
+        a = 2 / (ratio_specific_heat + 1)
         mach_guess = 1 + np.sqrt(abs(area_ratio - 1)) / np.sqrt(a)
         for i in range(max_iterations):
-            error = self.area_ratio(mach_guess) - area_ratio
+            error = area_ratio(mach_guess) - area_ratio
             if all(abs(error)) >= threshold:
-                slope = self.area_ratio_derivative(mach_guess)
+                slope = area_ratio_derivative(mach_guess)
                 mach_guess -= error / slope
 
     return mach_guess
