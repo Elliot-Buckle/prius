@@ -31,7 +31,10 @@ class Thermal:
         grid_shape = np.shape(nozzle.grid_x)
         cell_array_shape = (grid_shape[0] - 1, grid_shape[1] - 1)
         print(grid_shape)
-        cell_masses = np.full(cell_array_shape, NaN)
+        cell_heat_capacities = np.full(cell_array_shape, NaN)
+        
+        # Create temperature array
+        cell_temps = np.full(cell_array_shape, NaN)
         
         # Iterate over columns and rows
         for column in range(cell_array_shape[0]):
@@ -41,51 +44,63 @@ class Thermal:
                 cell_volume = abs(cell_area*np.pi*(nozzle.grid_y[row + 1, column] + nozzle.grid_y[row, column] + nozzle.grid_y[row, column + 1] + nozzle.grid_y[row, column])/2)
                 #cell_volume = 0.5*(nozzle.grid_x_points[column + 1] - nozzle.grid_x_points[column])*((nozzle.grid_y_points[row + 1] - nozzle.grid_y_points[row + 1]) + (nozzle.grid_y_points[row] - nozzle.grid_y_points[row]))*2*pi*nozzle.grid_y_points[row]
                 cell_mass = abs(cell_volume * self.material_rho)
-                cell_masses[row, column] = cell_mass
-                print(cell_area, cell_volume, cell_mass)
+                cell_heat_capacities[row, column] = cell_mass * self.material_Cp
+        
+        # Assigning temperature to cells
+        cell_temps[np.nonzero(np.nan_to_num(cell_heat_capacities))] = 293.15
+        
+        # Calculating intercell distance (temporary approximation)
+        intercell_dist = abs(nozzle.x_values[1] - nozzle.x_values[0])
+        
+        plt.imshow(cell_temps)
+        plt.show()
                 
                 
-        #plt.imshow(cell_masses)
+        #plt.imshow(cell_heat_capacities)
         #plt.show()
         
         print("-----------------------")  
-        #print(cell_masses)
+        #print(cell_heat_capacities)
         
         # Determine surface areas of cells in array
-        
         # inner surface area
         cell_srf_areas_inner = np.full(cell_array_shape, NaN)
-        
-        for column in range(cell_array_shape[0]):
-            for row in range(cell_array_shape[1]):
-                cell_srf_area = abs(sqrt(((nozzle.grid_y[row, column] - nozzle.grid_y[row+1, column]) ** 2) + (nozzle.grid_x[row, column+1] - nozzle.grid_x[row, column]) ** 2 ) * np.pi)
-                cell_srf_areas_inner[row, column] = cell_srf_area
-                
         # outer surface area
         cell_srf_areas_outer = np.full(cell_array_shape, NaN)
-        
-        for column in range(cell_array_shape[0]):
-            for row in range(cell_array_shape[1]):
-                cell_srf_area = abs(sqrt(((nozzle.grid_y[row+1, column] - nozzle.grid_y[row, column]) ** 2) + (nozzle.grid_x[row, column+1] - nozzle.grid_x[row, column]) ** 2 ) * np.pi)
-                cell_srf_areas_outer[row, column] = cell_srf_area
-        
         # top surface area
-        cell_srf_areas_top = np.full(cell_array_shape, NaN)
-        
-        for column in range(cell_array_shape[0]):
-            for row in range(cell_array_shape[1]):
-                cell_srf_area = abs((nozzle.grid_y[row, column] - nozzle.grid_y[row+1, column]) * (nozzle.grid_y[row+1, column] - nozzle.grid_y[row, column]) * 2 * np.pi)
-                cell_srf_areas_top[row, column] = cell_srf_area
-                  
+        cell_srf_areas_aft = np.full(cell_array_shape, NaN)
         # bottom surface area
-        cell_srf_areas_bottom = np.full(cell_array_shape, NaN)
+        cell_srf_areas_fore = np.full(cell_array_shape, NaN)
+        
         for column in range(cell_array_shape[0]):
             for row in range(cell_array_shape[1]):
-                pass
-        
-        #plt.imshow(cell_srf_areas_inner)
-        #plt.imshow(cell_srf_areas_outer)
-        #plt.show()
+                # Inner surface area
+                cell_srf_area = sqrt(
+                    ((nozzle.grid_y[row, column] - nozzle.grid_y[row, column+1]) ** 2) + (nozzle.grid_x[row, column+1] - nozzle.grid_x[row, column]) ** 2 
+                    ) * np.pi * (nozzle.grid_y[row, column] + nozzle.grid_y[row, column+1])
+                cell_srf_areas_inner[row, column] = cell_srf_area
+                
+                # Outer surface area
+                cell_srf_area = sqrt(
+                    ((nozzle.grid_y[row + 1, column] - nozzle.grid_y[row + 1, column+1]) ** 2) + (nozzle.grid_x[row + 1, column+1] - nozzle.grid_x[row + 1, column]) ** 2 
+                    ) * np.pi * (nozzle.grid_y[row + 1, column] + nozzle.grid_y[row + 1, column+1])
+                cell_srf_areas_outer[row, column] = cell_srf_area
+                
+                # Aft surface area
+                cell_srf_area = sqrt(
+                    ((nozzle.grid_y[row, column + 1] - nozzle.grid_y[row + 1, column+1]) ** 2) + (nozzle.grid_x[row, column+1] - nozzle.grid_x[row + 1, column + 1]) ** 2 
+                    ) * np.pi * (nozzle.grid_y[row + 1, column + 1] + nozzle.grid_y[row, column+1])
+                cell_srf_areas_aft[row, column] = cell_srf_area
+                
+                # Fore surface area
+                cell_srf_area = sqrt(
+                    ((nozzle.grid_y[row, column] - nozzle.grid_y[row + 1, column]) ** 2) + (nozzle.grid_x[row, column] - nozzle.grid_x[row + 1, column]) ** 2 
+                    ) * np.pi * (nozzle.grid_y[row + 1, column] + nozzle.grid_y[row, column])
+                cell_srf_areas_fore[row, column] = cell_srf_area
+                
+        # plt.imshow(cell_srf_areas_fore)
+        # #plt.imshow(cell_srf_areas_outer)
+        # plt.show()
         
 if __name__ == "__main__":
     #nozzle = Nozzle(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, nozzle_OD=75*10**-3)

@@ -192,10 +192,10 @@ class Nozzle:
         model_pts = []
         
         # Generating points for sim
-        self.grid_x_points = np.linspace(0, self.xpoints[-1], resolution) # X values of grid points
-        self.grid_y_points = np.linspace(0, self.nozzle_OD, resolution) # Y values of grid points
-        self.bottom_y_points = np.interp(self.grid_x_points, self.xpoints, self.ypoints) # Y values of bottom edge
-        self.grid_x, self.grid_y = np.meshgrid(self.grid_x_points, self.grid_y_points) # Generates 2d arrays of x values and y values of the grid points
+        self.x_values = np.linspace(0, self.xpoints[-1], resolution) # X values of grid points
+        self.y_values = np.linspace(0, self.nozzle_OD, resolution) # Y values of grid points
+        self.bottom_y_points = np.interp(self.x_values, self.xpoints, self.ypoints) # Y values of bottom edge
+        self.grid_x, self.grid_y = np.meshgrid(self.x_values, self.y_values) # Generates 2d arrays of x values and y values of the grid points
         
         # Clears points that lie outside nozzle
         for column in range(resolution):
