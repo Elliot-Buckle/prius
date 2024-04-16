@@ -88,18 +88,20 @@ class Engine:
         self.engine.add(self.structure.geometry, name="plate2", color="gray")
         # for i in range(self.structure.bolts):
         #     self.engine.add(self.structure.bolt_geometry, name="bolt"+str(i+1), color="gray")
-        # aligning faces of nozzle and grain
-        self.engine.constrain("nozzle@faces@>Z", "grain@faces@<X", "Axis")
-        # putting two together
-        self.engine.constrain("nozzle@faces@>X[1]", "grain@faces@<X", "Point")
-        # aligning faces of injector and grain
-        self.engine.constrain("injector@faces@<X[1]", "grain@faces@>X", "Plane")
+        # aligning bolt holes
+        self.engine.constrain("plate2@faces@>X", "plate1@faces@>X", "Axis")
         # aligning nozzle plate
         self.engine.constrain("plate1@faces@>Z", "nozzle@faces@>X", "Axis")
         self.engine.constrain("plate1@faces@<Z", "nozzle@faces@>X", "Point")
         # aligning injector plate
         self.engine.constrain("plate2@faces@>Z", "injector@faces@>X", "Axis")
         self.engine.constrain("plate2@faces@>Z", "injector@faces@<X", "Point")
+        # aligning faces of nozzle and grain
+        self.engine.constrain("nozzle@faces@>Z", "grain@faces@<X", "Axis")
+        # putting two together
+        self.engine.constrain("nozzle@faces@>X[1]", "grain@faces@<X", "Point")
+        # aligning faces of injector and grain
+        self.engine.constrain("injector@faces@<X[1]", "grain@faces@>X", "Plane")
         self.engine.solve()
         
         show(self.engine)

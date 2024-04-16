@@ -196,22 +196,27 @@ class Nozzle:
         self.y_values = np.linspace(0, self.nozzle_OD, resolution) # Y values of grid points
         self.gas_side_y_values = np.interp(self.x_values, self.xpoints, self.ypoints) # Y values of bottom edge
         self.grid_x, self.grid_y = np.meshgrid(self.x_values, self.y_values) # Generates 2d arrays of x values and y values of the grid points
-        self.grid_wall_indicies = np.zeros((resolution, 2))
+        self.grid_wall_indices = np.zeros((resolution, 2), dtype=int)
         
         # Clears points that lie outside nozzle, get indicies of wall
         for column in range(resolution):
-            external_indicies = np.nonzero(self.grid_y[:, column] < self.gas_side_y_values[column])
-            self.grid_y[external_indicies, column] = NaN
-            self.grid_x[external_indicies, column] = NaN
+            external_indices = np.nonzero(self.grid_y[:, column] < self.gas_side_y_values[column])
+            self.grid_y[external_indices, column] = NaN
+            self.grid_x[external_indices, column] = NaN
             
             # get indicies of points ON GRID that lie on the wall
             grid_wall_index = np.array([np.min(np.argwhere(self.grid_y[:, column] > self.gas_side_y_values[column])), column])
-            self.grid_wall_indicies[column, :] = grid_wall_index
+            self.grid_wall_indices[column, :] = grid_wall_index
+            self.grid_y[grid_wall_index[0], grid_wall_index[1]] = self.gas_side_y_values[column]
             
         # Snapping y values to contour
-        self.grid_y[self.grid_wall_indicies] = self.gas_side_y_values
+        # print(self.grid_wall_indices)
+        # print(self.gas_side_y_values)
+        # self.grid_y[self.grid_wall_indices] = self.gas_side_y_values
+        # plt.imshow(self.grid_y)
+        # plt.show()
         # get indicies of CELLS that lie on the wall
-        self.cell_wall_indicies = self.grid_wall_indicies[:-1, :]
+        self.cell_wall_indicies = self.grid_wall_indices[:-1, :]
         
         # Generating model
         for i in range(len(model_xpoints)):
