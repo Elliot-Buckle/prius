@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import cadquery as cq
 from ocp_vscode import *
 from rocketcea.cea_obj import CEA_Obj
+from propellants import *
 
 class Engine:
     def __init__(
@@ -74,12 +75,13 @@ class Engine:
         print("Oxidizer: " + self.oxidizer)
         print(f"O/F ratio: {round(self.nozzle.mixture_ratio, 2)}")
         print("")
+        self.grain.describe()
         self.nozzle.describe()
         self.injector.describe()
-        self.grain.describe()
         self.structure.describe()
         
     def model(self, export=False):
+        grain_colour = colours[self.fuel]
         self.grain.model()
         self.injector.model()
         self.nozzle.model()
@@ -87,7 +89,7 @@ class Engine:
         self.engine = cq.Assembly(name="Engine")
         # self.engine.add(self.nozzle.geometry, name="nozzle", loc=cq.Location((100,0,0), (1,0,0), 0))
         self.engine.add(self.nozzle.geometry, name="nozzle", color="silver")
-        self.engine.add(self.grain.geometry, name="grain", color="white")
+        self.engine.add(self.grain.geometry, name="grain", color=grain_colour)
         self.engine.add(self.injector.geometry, name="injector", color="silver")
         self.engine.add(self.structure.geometry, name="plate1", color="gray")
         self.engine.add(self.structure.geometry, name="plate2", color="gray")
@@ -113,8 +115,8 @@ class Engine:
         
     
         
-# Oxidizer can be either N2O or GOX
-engine = Engine(fuel="HDPE", oxidizer="N2O", Pc=3*10**6, thrust=300, ox_den=786.6, cd=0.44,
+# Oxidizer can be either "N2O" or "GOX"
+engine = Engine(fuel="PMMA", oxidizer="GOX", Pc=3*10**6, thrust=300, ox_den=786.6, cd=0.44,
                 tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, ox_flux=200,
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
                 sheath_l=15*10**-3)

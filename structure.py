@@ -62,3 +62,4 @@ class Strucutre:
     def describe(self):
         print("--------------STRUCTURE--------------")
         print(f"Tensile Force (N): {round(self.tensile_force)}")
+        print("")

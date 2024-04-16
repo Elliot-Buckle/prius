@@ -46,3 +46,12 @@ densities = {
     "PC":1200,
     "PLA":1240
 }
+
+colours = {
+    "HTPB":"black",
+    "PMMA":"aliceblue",
+    "HDPE":"orangered",
+    "ABS":"white",
+    "PC":"azure",
+    "PLA":"cornflowerblue"
+}
