@@ -29,8 +29,9 @@ class Thermal:
         # plt.imshow(self.cell_srf_areas_fore)
         # plt.imshow(self.cell_srf_areas_outer)
         # plt.show()
-        
-    # Calculation of heat flux between gas inside chamber and wall of chamber        
+     
+     
+    # miscellaneous required calcs for heat sim           
     def calculate(self):
         self.nozzle.model()
         
@@ -60,8 +61,8 @@ class Thermal:
         # Calculating intercell distance (temporary approximation)
         intercell_dist = abs(self.nozzle.x_values[1] - self.nozzle.x_values[0])
         
-        plt.imshow(self.cell_temps)
-        plt.show()
+        #plt.imshow(self.cell_temps)
+        #plt.show()
                 
                 
         #plt.imshow(self.cell_heat_capacities)
@@ -70,7 +71,7 @@ class Thermal:
         print("-----------------------")  
         #print(self.cell_heat_capacities)
         
-        # Determine surface areas of cells in array
+        # Determine surface areas and thicknesses of cells in array
         # inner surface area
         self.cell_srf_areas_inner = np.full(cell_array_shape, NaN)
         # outer surface area
@@ -79,6 +80,11 @@ class Thermal:
         self.cell_srf_areas_aft = np.full(cell_array_shape, NaN)
         # bottom surface area
         self.cell_srf_areas_fore = np.full(cell_array_shape, NaN)
+        
+        # thickness in x-direction
+        self.cell_thicknesses_x = np.full(cell_array_shape, NaN)
+        # thickness in y-direction
+        self.cell_thicknesses_y = np.full(cell_array_shape, NaN)
         
         for column in range(cell_array_shape[0]):
             for row in range(cell_array_shape[1]):
@@ -105,12 +111,19 @@ class Thermal:
                     ((self.nozzle.grid_y[row, column] - self.nozzle.grid_y[row + 1, column]) ** 2) + (self.nozzle.grid_x[row, column] - self.nozzle.grid_x[row + 1, column]) ** 2 
                     ) * np.pi * (self.nozzle.grid_y[row + 1, column] + self.nozzle.grid_y[row, column])
                 self.cell_srf_areas_fore[row, column] = cell_srf_area
+                
+                # Thickness in x direction
+                cell_thickness = abs(self.nozzle.grid_x[row, column] - self.nozzle.grid_x[row+1, column])
+                self.cell_thicknesses_x[row, column] = cell_thickness
+                
+                # Thickness in y direction
+                cell_thickness = abs(self.nozzle.grid_y[row, column+1] - self.nozzle.grid_y[row, column])
+                self.cell_thicknesses_y[row, column] = cell_thickness
         
-        # Calcualte gas properites
+        # Calculate gas properties
         self.mol_wt_gamma = self.nozzle.prop.get_Chamber_MolWt_gamma(self.nozzle.Pc_psi, self.nozzle.mixture_ratio)
         self.gamma = self.mol_wt_gamma[1]
         self.mol_wt = self.mol_wt_gamma[0]/1000 # kg/mol
-        data_length = np.size(self.nozzle.x_values)
         # Index of throat values
         self.throat_index = np.argmin(self.nozzle.gas_side_y_values)
         # Subsonic machs
@@ -147,11 +160,40 @@ class Thermal:
         # array of chamber, throat, exit viscosities (Pa s)
         CTE_mu = np.array([chamber_transport_properties[1], throat_transport_properties[1], exit_transport_properties[1]])*0.0001
         # Interpolated viscosity
-        self.gas_viscoscities = np.flip(np.interp(np.flip(self.gas_temperatures), np.flip(CTE_temps) , np.flip(CTE_mu)))
+        self.gas_viscosities = np.flip(np.interp(np.flip(self.gas_temperatures), np.flip(CTE_temps) , np.flip(CTE_mu)))
         
         #transport_properties = ispObj.get_Chamber_Transport(Pc=Nozzle.Pc_psi, MR=Nozzle.mixture_ratio, frozen=1)
+     
+    # Determine heat flux on chamber wall
+    def wall_heat_fluxes(self, wall_temp):
+        wall_heat_flux = 0.023 * (((self.mass_fluxes ** 0.8) * (self.prandtl_numbers ** 0.4) * self.gas_conductivities) / ((Nozzle.gas_side_y_values ** 0.2) * (self.gas_conductivities ** 0.8))) * (self.chamber_temp - wall_temp)
+        return wall_heat_flux
+    
+    # Determine heat flux on adjacent cells
+    def cell_heat_fluxes(self, material_conductivity, cell_thickness, cell_temp, adjacent_cell_temp):
+        cell_heat_flux = (material_conductivity / cell_thickness) * (cell_temp - adjacent_cell_temp)
+        return cell_heat_flux
+    
+    # Main simulation
+    def simulation(self):
+        self.nozzle.model()
         
-               
+        while np.nanmax(self.cell_temps) < self.melting_point:
+            # Create array for adjacent cell temperature
+            
+            # Apply heat flux to cells along wall
+            #self.heat_fluxes_wall
+            
+            # Apply heat flux
+            self.heat_fluxes_cell = self.cell_heat_fluxes(self.conductivity_x, self.cell_thicknesses_x, self.cell_temps, np.roll(self.cell_temps, 1, 1))
+            delta_T = self.heat_fluxes_cell / self.cell_heat_capacities
+            self.cell_temps += delta_T
+            print(delta_T)
+            
+            
+            
+            
+            
         
 if __name__ == "__main__":
     #nozzle = Nozzle(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, nozzle_OD=75*10**-3)
@@ -160,5 +202,6 @@ if __name__ == "__main__":
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
                 sheath_l=15*10**-3)
     thermal = Thermal(engine.nozzle, k_x=237, k_y=237, material_Cp=1507.248, melting_point=933.5, material_density=2710)
-    thermal.calculate()              
+    thermal.calculate()
+    thermal.simulation()           
         
