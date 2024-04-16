@@ -64,6 +64,11 @@ class Engine:
         #self.nozzle.plot()
 
     def describe(self):
+        print("")
+        print("")
+        print("")
+        print("")
+        print("")
         print("----------------ENGINE----------------")
         print("Fuel: " + self.fuel)
         print("Oxidizer: " + self.oxidizer)

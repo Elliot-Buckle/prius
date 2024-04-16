@@ -132,18 +132,18 @@ class Nozzle:
             add_new_fuel(key, cea_cards[key])
         
         # Creation of CEA object
-        instance = CEA_Obj(oxName=self.oxidizer, fuelName=self.fuel)
+        self.prop = CEA_Obj(oxName=self.oxidizer, fuelName=self.fuel)
         
         # Unit conversion
         self.Pc_psi = self.chamber_pressure*0.0001450377
         self.Pa_psi = self.ambient_pressure*0.0001450377
         
         # Stoichiometri mixture ratio
-        self.mixture_ratio = instance.getMRforER(ERphi=True)
+        self.mixture_ratio = self.prop.getMRforER(ERphi=True)
         
         # self.throat_pressure = self.chamber_pressure*((self.ratio_of_heats + 1)/2)**(self.ratio_of_heats/(1 - self.ratio_of_heats))
         
-        self.area_ratio_1D = instance.get_eps_at_PcOvPe(Pc=self.Pc_psi, MR=self.mixture_ratio, PcOvPe=self.chamber_pressure/self.exit_pressure_1D, frozen=1)
+        self.area_ratio_1D = self.prop.get_eps_at_PcOvPe(Pc=self.Pc_psi, MR=self.mixture_ratio, PcOvPe=self.chamber_pressure/self.exit_pressure_1D, frozen=1)
         
         # self.exit_vel_1D = np.sqrt(
         #     2*self.ratio_of_heats/
@@ -158,12 +158,12 @@ class Nozzle:
         
         # self.isp_s = self.isp_m_s/g
         
-        self.performance = instance.estimate_Ambient_Isp(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, self.Pa_psi, frozen=1)
+        self.performance = self.prop.estimate_Ambient_Isp(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, self.Pa_psi, frozen=1)
         self.isp_s = self.performance[0]
         self.isp_m_s = self.isp_s*g
         self.mass_flow = self.thrust/self.isp_m_s
-        self.cstar = instance.get_Cstar(self.Pc_psi, self.mixture_ratio)*0.3048
-        self.throat_mass_flux = self.cstar*instance.get_Densities(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, frozen=1)[1]*16.018463
+        self.cstar = self.prop.get_Cstar(self.Pc_psi, self.mixture_ratio)*0.3048
+        self.throat_mass_flux = self.cstar*self.prop.get_Densities(self.Pc_psi, self.mixture_ratio, self.area_ratio_1D, frozen=1)[1]*16.018463
         self.throat_area = self.mass_flow/self.throat_mass_flux
         
         self.throat_radius = np.sqrt(self.throat_area/np.pi)
@@ -185,7 +185,7 @@ class Nozzle:
         print(f"Exit Condition (Psia): {self.performance[1]}")
         print("")
         
-    def model(self, export=False, resolution=32):
+    def model(self, export=False, resolution=128):
         # Generating points for CAD
         model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
         model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius + self.clearance)*1000] + [(self.grain.outer_radius + self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]

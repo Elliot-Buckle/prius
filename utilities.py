@@ -51,7 +51,7 @@ def pressure_from_mach(mach, pressure_chamber, ratio_specific_heat):
 
 def mass_flux(mach, ratio_specific_heat, pressure_chamber, temperature_chamber, mass_molar):
     """Mass Flux from Mach"""
-    temperature = temp_from_mach(mach)
+    temperature = temp_from_mach(mach, temperature_chamber, ratio_specific_heat)
     k = ratio_specific_heat
     return (
         pressure_chamber
@@ -65,12 +65,12 @@ def mass_flux(mach, ratio_specific_heat, pressure_chamber, temperature_chamber, 
         )
     )
 
-def area_ratio(mach, ratio_specific_heat):
+def calc_area_ratio(mach, ratio_specific_heat):
     """Area Ratio"""
     k = ratio_specific_heat
     return 1 / mach * ((2 + (k - 1) * mach**2) / (k + 1)) ** ((k + 1) / (2 * k - 2))
 
-def area_ratio_derivative(self, mach, ratio_specific_heat):
+def area_ratio_derivative(mach, ratio_specific_heat):
     """Area Ratio Derivative"""
     k = ratio_specific_heat
     return (
@@ -89,17 +89,17 @@ def mach_from_area(area, area_throat, ratio_specific_heat, is_subsonic: bool = F
     if is_subsonic:
         mach_guess = 1 / area_ratio
         for i in range(max_iterations):
-            error = area_ratio(mach_guess) - area_ratio
+            error = calc_area_ratio(mach_guess, ratio_specific_heat) - area_ratio
             if all(abs(error)) >= threshold:
-                slope = area_ratio_derivative(mach_guess)
+                slope = area_ratio_derivative(mach_guess, ratio_specific_heat)
                 mach_guess -= error / slope
     else:
         a = 2 / (ratio_specific_heat + 1)
         mach_guess = 1 + np.sqrt(abs(area_ratio - 1)) / np.sqrt(a)
         for i in range(max_iterations):
-            error = area_ratio(mach_guess) - area_ratio
+            error = calc_area_ratio(mach_guess, ratio_specific_heat) - area_ratio
             if all(abs(error)) >= threshold:
-                slope = area_ratio_derivative(mach_guess)
+                slope = area_ratio_derivative(mach_guess, ratio_specific_heat)
                 mach_guess -= error / slope
 
     return mach_guess
