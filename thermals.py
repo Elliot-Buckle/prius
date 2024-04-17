@@ -1,5 +1,4 @@
 from constants import *
-from engine import Engine
 from nozzle import Nozzle
 import numpy as np
 from numpy import *
@@ -8,23 +7,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from rocketcea.cea_obj import CEA_Obj
 from utilities import *
+from materials import *
 
 class Thermal:
     def __init__(
         self,
         nozzle:Nozzle,
-        k_x:float,
-        k_y:float,
-        material_Cp:float,
-        melting_point:float,
-        material_density:float,
+        material:str,
     ):
-        self.conductivity_x = k_x
-        self.conductivity_y = k_y
-        self.material_Cp = material_Cp
-        self.melting_point = melting_point
-        self.material_rho = material_density
+        self.conductivity_x = float(materials[material]["k_x"])
+        self.conductivity_y = float(materials[material]["k_y"])
+        self.material_Cp = float(materials[material]["C"])
+        self.melting_point = float(materials[material]["Tmax"])
+        self.material_rho = float(materials[material]["rho"])
         self.nozzle = nozzle
+        self.material = material
+        self.calculate()
         
                 
         # plt.imshow(self.cell_srf_areas_fore)
@@ -172,7 +170,7 @@ class Thermal:
     
     # Main simulation
     def simulation(self):
-        timestep = 0.001
+        timestep = 0.0001
         self.nozzle.model()
         i=0
         time = 0
@@ -212,20 +210,24 @@ class Thermal:
             # if i == 1000:
             #     break
             
-            if i % 250 == 0:
-                im = ax.imshow(self.cell_temps, cmap="cividis", animated=True)
+            if i % int(round(1/timestep)) == 0:
+                im = ax.imshow(self.cell_temps, cmap="inferno", animated=True)
                 #im = ax.colorbar()
                 #im = ax.title(f"t = {round(time, 3)}s")
-                if i == 0:
-                    ax.imshow(self.cell_temps, cmap="cividis")
-                ims.append([im])
+                ann = ax.annotate(f"{self.material} Nozzle, t = {round(time)}s", (0.5, 1.03), xycoords="axes fraction", ha="center")
+                ims.append([im, ann])
             
             time += timestep
             i+=1
-            
+        self.max_burn_time = time
+        
+        print("--------------------THERMAL--------------------")
+        print(f"Time before safe temp limit exceeded: {round(self.max_burn_time, 1)}s")
+        print(f"Maximum Impulse (Ns): {round(self.nozzle.thrust*self.max_burn_time)}")
+        print("")
+        fig.colorbar(mappable=im, ax=ax, label="Temperature (K)")
         sim = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
         sim.save("heat_sim.gif")
-        plt.show()  
         
 
         
@@ -237,11 +239,4 @@ class Thermal:
         
 if __name__ == "__main__":
     #nozzle = Nozzle(Pc=3*10**6, Tc=3391.91, thrust=300, M=0.026041, mix_ratio=5.3, y=1.2593, nozzle_OD=75*10**-3)
-    engine = Engine(fuel="HDPE", oxidizer="N2O", Pc=1.5*10**6, thrust=300, ox_den=786.6, cd=0.44,
-                tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, ox_flux=200,
-                grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
-                sheath_l=15*10**-3)
-    thermal = Thermal(engine.nozzle, k_x=237, k_y=237, material_Cp=1507.248, melting_point=833.5, material_density=2710)
-    thermal.calculate()
-    thermal.simulation()           
-        
+    pass
