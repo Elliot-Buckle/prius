@@ -14,6 +14,7 @@ class Thermal:
         self,
         nozzle:Nozzle,
         material:str,
+        sim_file_name:str,
     ):
         self.conductivity_x = float(materials[material]["k_x"])
         self.conductivity_y = float(materials[material]["k_y"])
@@ -22,6 +23,7 @@ class Thermal:
         self.material_rho = float(materials[material]["rho"])
         self.nozzle = nozzle
         self.material = material
+        self.sim_file_name = sim_file_name
         self.calculate()
         
                 
@@ -227,7 +229,7 @@ class Thermal:
         print("")
         fig.colorbar(mappable=im, ax=ax, label="Temperature (K)")
         sim = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
-        sim.save("heat_sim.gif")
+        sim.save(self.sim_file_name)
         
 
         
