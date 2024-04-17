@@ -2,7 +2,7 @@ from constants import *
 from injector import Injector
 from nozzle import Nozzle
 from grain import Grain
-from structure import Strucutre
+from structure import Structure
 import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
@@ -25,7 +25,7 @@ class Engine:
         grain_OD:float,
         cap_OD:float,
         material:str = "Aluminium",
-        sim_file_name:str = "heat_sim.gif",
+        sim_file_name:str = "heat_sim",
         postcomb_LD:float = 1,
         lip_t:float = 5*10**-3,
         plate_t:float = 5*10**-3,
