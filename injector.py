@@ -78,7 +78,7 @@ class Injector:
             print(f"Reynolds number: {round(self.reynolds_number, 2)}")
         print("")
         
-    def model(self):
+    def model(self, export:bool=False):
         self.precomb_diam = self.grain.outer_diameter - 2*self.lip_thickness
         self.precomb_radius = self.precomb_diam/2
         self.precomb_length = self.precomb_LD*self.precomb_diam
@@ -105,7 +105,8 @@ class Injector:
             .finalize()
             .cutBlind(self.plate_thickness*1000)
         )
-        cq.exporters.export(self.geometry, "injector.step")
+        if export:
+            cq.exporters.export(self.geometry, "injector.step")
     
     def calculate(self):
         #Determine oxidizer flow rate

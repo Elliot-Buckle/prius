@@ -63,13 +63,6 @@ class Engine:
         # Generating Structure
         self.structure = Strucutre(self.nozzle, bolt_OD=5*10**-3, bolt_ID=4.134*10**-3, bolt_distance=100*10**-3, yield_stress=400*10**6, FoS=4, grain=self.grain, injector=self.injector)
         self.thermal = Thermal(self.nozzle, self.material, self.sim_file_name)
-        self.model()
-        #show(self.grain.geometry)
-        #self.injector.model()
-        #self.nozzle.plot()
-        #show(self.nozzle.geometry)
-        self.describe()
-        #self.nozzle.plot()
 
     def describe(self):
         print("")
@@ -95,14 +88,11 @@ class Engine:
         self.nozzle.model()
         self.structure.model()
         self.engine = cq.Assembly(name="Engine")
-        # self.engine.add(self.nozzle.geometry, name="nozzle", loc=cq.Location((100,0,0), (1,0,0), 0))
         self.engine.add(self.nozzle.geometry, name="nozzle", color=nozzle_colour)
         self.engine.add(self.grain.geometry, name="grain", color=grain_colour)
         self.engine.add(self.injector.geometry, name="injector", color="silver")
         self.engine.add(self.structure.geometry, name="plate1", color="gray")
         self.engine.add(self.structure.geometry, name="plate2", color="gray")
-        # for i in range(self.structure.bolts):
-        #     self.engine.add(self.structure.bolt_geometry, name="bolt"+str(i+1), color="gray")
         # aligning bolt holes
         self.engine.constrain("plate2@faces@>X", "plate1@faces@>X", "Axis")
         # aligning nozzle plate
@@ -118,7 +108,30 @@ class Engine:
         # aligning faces of injector and grain
         self.engine.constrain("injector@faces@<X[1]", "grain@faces@>X", "Plane")
         self.engine.solve()
-        
+        if export:
+            # there's issues with coloured step files for some reason, hence assy
+            assy = cq.Assembly(name="Engine")
+            assy.add(self.nozzle.geometry, name="nozzle")
+            assy.add(self.grain.geometry, name="grain")
+            assy.add(self.injector.geometry, name="injector")
+            assy.add(self.structure.geometry, name="plate1")
+            assy.add(self.structure.geometry, name="plate2")
+            # aligning bolt holes
+            assy.constrain("plate2@faces@>X", "plate1@faces@>X", "Axis")
+            # aligning nozzle plate
+            assy.constrain("plate1@faces@>Z", "nozzle@faces@>X", "Axis")
+            assy.constrain("plate1@faces@<Z", "nozzle@faces@>X", "Point")
+            # aligning injector plate
+            assy.constrain("plate2@faces@>Z", "injector@faces@>X", "Axis")
+            assy.constrain("plate2@faces@>Z", "injector@faces@<X", "Point")
+            # aligning faces of nozzle and grain
+            assy.constrain("nozzle@faces@>Z", "grain@faces@<X", "Axis")
+            # putting two together
+            assy.constrain("nozzle@faces@>X[1]", "grain@faces@<X", "Point")
+            # aligning faces of injector and grain
+            assy.constrain("injector@faces@<X[1]", "grain@faces@>X", "Plane")
+            assy.solve()
+            assy.save("engine.step")
         show(self.engine)
         
     
@@ -128,4 +141,4 @@ engine = Engine(fuel="HDPE", oxidizer="GOX", Pc=3*10**6, thrust=300, ox_den=786.
                 tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, ox_flux=200,
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
                 sheath_l=15*10**-3, material="Aluminium", sim_file_name="Ally")
-engine.thermal.simulation()
+engine.model(export=True)

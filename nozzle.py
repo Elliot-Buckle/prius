@@ -185,7 +185,7 @@ class Nozzle:
         print(f"Exit Condition (Psia): {self.performance[1]}")
         print("")
         
-    def model(self, export=False, resolution=128):
+    def model(self, export:bool=False, resolution=128):
         # Generating points for CAD
         model_xpoints = [(self.xpoints[0] - self.sheath_length)*1000] + [(self.xpoints[0] - self.sheath_length)*1000] + [self.xpoints[0]*1000] + (self.xpoints*1000).tolist() + [self.xpoints[-1]*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [(self.xpoints[-1] - self.plate_thickness)*1000] + [self.xpoints[0]*1000]
         model_ypoints = [self.nozzle_OR*1000] + [(self.grain.outer_radius + self.clearance)*1000] + [(self.grain.outer_radius + self.clearance)*1000] + (self.ypoints*1000).tolist() + [(self.nozzle_OR - self.lip_thickness)*1000] + [(self.nozzle_OR - self.lip_thickness)*1000] + [self.nozzle_OR*1000] + [self.nozzle_OR*1000]

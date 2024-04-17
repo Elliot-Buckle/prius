@@ -38,7 +38,7 @@ class Strucutre:
         self.FoS
         
     
-    def model(self):
+    def model(self, export:bool=False):
         # self.bolt_length = (
         #     self.grain.grain_length - self.nozzle.sheath_length*2 + self.nozzle.length + self.injector.precomb_length +self.injector.orifice_length
         #     + self.injector.manifold_length + 0.05
@@ -57,6 +57,8 @@ class Strucutre:
             .vertices()
             .hole((self.bolt_OD + 2*self.nozzle.clearance)*1000)
         )
+        if export:
+            cq.exporters.export(self.geometry, "plate.step")
 
     
     def describe(self):
