@@ -210,7 +210,7 @@ class Thermal:
             # if i == 1000:
             #     break
             
-            if i % int(round(1/timestep)) == 0:
+            if i % int(round(1/(10*timestep))) == 0:
                 im = ax.imshow(self.cell_temps, cmap="inferno", animated=True)
                 #im = ax.colorbar()
                 #im = ax.title(f"t = {round(time, 3)}s")
