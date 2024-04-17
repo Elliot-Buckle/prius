@@ -2,7 +2,7 @@ from constants import *
 from injector import Injector
 from nozzle import Nozzle
 from grain import Grain
-from structure import Strucutre
+from structure import Structure
 import numpy as np
 import matplotlib.pyplot as plt
 import cadquery as cq
@@ -25,7 +25,7 @@ class Engine:
         grain_OD:float,
         cap_OD:float,
         material:str = "Aluminium",
-        sim_file_name:str = "heat_sim.gif",
+        sim_file_name:str = "heat_sim",
         postcomb_LD:float = 1,
         lip_t:float = 5*10**-3,
         plate_t:float = 5*10**-3,
@@ -61,7 +61,7 @@ class Engine:
         self.nozzle = Nozzle(fuel, oxidizer, Pc, actual_thrust, cap_OD, plate_thickness=plate_t, lip_thickness=lip_t, grain=self.grain, sheath_length=sheath_l, Pe=Pe, Pa=Pa)
         
         # Generating Structure
-        self.structure = Strucutre(self.nozzle, bolt_OD=5*10**-3, bolt_ID=4.134*10**-3, bolt_distance=100*10**-3, yield_stress=400*10**6, FoS=4, grain=self.grain, injector=self.injector)
+        self.structure = Structure(self.nozzle, bolt_OD=5*10**-3, bolt_ID=4.134*10**-3, bolt_distance=100*10**-3, yield_stress=400*10**6, FoS=4, grain=self.grain, injector=self.injector)
         self.thermal = Thermal(self.nozzle, self.material, self.sim_file_name)
 
     def describe(self):

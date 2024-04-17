@@ -176,16 +176,17 @@ class Thermal:
         self.nozzle.model()
         i=0
         time = 0
+        # Create plots for animation
         fig, ax = plt.subplots()
         ims = []
+        
+        # Main loop
         while np.nanmax(self.cell_temps) < self.melting_point:
             # Create array for adjacent cell temperature
             # Apply heat flux to cells along wall
             self.wall_delta_heat = timestep * self.cell_srf_areas_outer[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns] * self.wall_heat_fluxes(self.cell_temps[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns])
             delta_T = np.nan_to_num(self.wall_delta_heat / self.cell_heat_capacities[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns])
             self.cell_temps[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns] += delta_T
-            #print(self.cell_heat_capacities[self.nozzle.cell_wall_rows, self.nozzle.cell_wall_columns])
-            #print(np.nanmax(self.wall_delta_heat), np.nanmax(delta_T))
             # Apply heat flux to cells below
             roll_down = np.roll(self.cell_temps, 1, 0)
             roll_down[0, :] = NaN
@@ -203,19 +204,11 @@ class Thermal:
             + self.cell_srf_areas_fore * self.cell_heat_fluxes(self.conductivity_x, self.cell_thicknesses_x, self.cell_temps, roll_left)
             )
             delta_T = np.nan_to_num(self.delta_cell_heat / self.cell_heat_capacities)
-            #print(np.min(delta_T))
             self.cell_temps += delta_T
-            # print(np.nanmax(self.delta_cell_heat), np.nanmax(delta_T))
-            # plt.imshow(self.cell_temps)
-            # plt.title(f"t = {round(time, 3)}s")
-            #plt.pause(timestep)
-            # if i == 1000:
-            #     break
             
+            # Create frames for animation and add title with timestamp
             if i % int(round(1/(10*timestep))) == 0:
                 im = ax.imshow(self.cell_temps, cmap="inferno", animated=True)
-                #im = ax.colorbar()
-                #im = ax.title(f"t = {round(time, 3)}s")
                 ann = ax.annotate(f"{self.material} Nozzle, t = {round(time)}s", (0.5, 1.03), xycoords="axes fraction", ha="center")
                 ims.append([im, ann])
             
@@ -227,6 +220,7 @@ class Thermal:
         print(f"Time before safe temp limit exceeded: {round(self.max_burn_time, 1)}s")
         print(f"Maximum Impulse (Ns): {round(self.nozzle.thrust*self.max_burn_time)}")
         print("")
+        # Add colour bar to animation and save file
         fig.colorbar(mappable=im, ax=ax, label="Temperature (K)")
         sim = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
         sim.save(self.sim_file_name)

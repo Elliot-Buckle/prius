@@ -4,7 +4,7 @@ from injector import Injector
 import numpy as np
 import cadquery as cq
 
-class Strucutre:
+class Structure:
     def __init__(
         self,
         nozzle:Nozzle,
