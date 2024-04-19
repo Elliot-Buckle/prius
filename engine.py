@@ -137,8 +137,10 @@ class Engine:
     
         
 # Oxidizer can be either "N2O" or "GOX"
-engine = Engine(fuel="HDPE", oxidizer="GOX", Pc=3*10**6, thrust=300, ox_den=786.6, cd=0.44,
-                tank_pressure=50.525*10**5, crit_pressure_drop=17.4*10**5, orifice_diameter=1*10**-3, ox_flux=200,
+engine = Engine(fuel="HDPE", oxidizer="GOX", material="Aluminium", sim_file_name="Ally", Pc=3*10**6, thrust=300,
+                tank_pressure=50.525*10**5, orifice_diameter=1*10**-3, ox_flux=200,
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
-                sheath_l=15*10**-3, material="Aluminium", sim_file_name="Ally")
-engine.model(export=True)
+                sheath_l=15*10**-3)
+engine.describe()
+engine.model(export=False)
+engine.thermal.simulation()
