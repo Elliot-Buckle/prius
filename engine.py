@@ -142,5 +142,6 @@ engine = Engine(fuel="HDPE", oxidizer="GOX", material="Aluminium", sim_file_name
                 grain_OD=65*10**-3, cap_OD=75*10**-3, lip_t=10*10**-3, plate_t=10*10**-3, orifice_length = 10*10**-3, manifold_length = 20*10**-3,
                 sheath_l=15*10**-3)
 engine.describe()
-engine.model(export=False)
-engine.thermal.simulation()
+engine.nozzle.model(export=True)
+#engine.model(export=False)
+#engine.thermal.simulation()
